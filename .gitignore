@@ -1,0 +1,14 @@
+node_modules/
+admin/node_modules/
+dist/
+admin/dist/
+.env
+.env.local
+admin/.env.local
+*.log
+.DS_Store
+.convex/
+
+# TypeScript
+*.tsbuildinfo
+admin/tsconfig.tsbuildinfo

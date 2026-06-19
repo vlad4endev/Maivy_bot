@@ -1,0 +1,43 @@
+{
+  "name": "maivy_bot",
+  "version": "1.0.0",
+  "description": "Мультиплатформенный бот для Telegram и MAX с админ-панелью",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "dev:admin": "npm run dev --prefix admin",
+    "dev:convex": "npx convex dev",
+    "build": "tsc",
+    "build:admin": "npm run build --prefix admin",
+    "build:all": "npm run build && npm run build:admin",
+    "start": "node dist/index.js",
+    "typecheck": "npm run typecheck:root && npm run typecheck:convex && npm run typecheck:admin",
+    "typecheck:root": "tsc --noEmit",
+    "typecheck:convex": "tsc --noEmit --project convex/tsconfig.json",
+    "typecheck:admin": "tsc --noEmit --project admin/tsconfig.json",
+    "predeploy": "npm run typecheck && npm run build:all",
+    "deploy:convex": "npx convex deploy --cmd 'npm run build --prefix admin' --cmd-url-env-var-name VITE_CONVEX_URL",
+    "deploy:bot:docker": "docker build -t maivy-bot .",
+    "docker:up": "docker compose up -d --build",
+    "docker:down": "docker compose down",
+    "install:all": "npm install && npm install --prefix admin"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": ["telegram", "max", "bot", "admin", "convex"],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@maxhub/max-bot-api": "^0.2.2",
+    "convex": "^1.21.0",
+    "dotenv": "^17.4.2",
+    "grammy": "^1.44.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.0.0",
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3"
+  }
+}

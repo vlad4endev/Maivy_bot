@@ -1,0 +1,17 @@
+node_modules
+admin/node_modules
+dist
+admin/dist
+.env
+.env.*
+!.env.example
+admin/.env.local
+.git
+.github
+.convex
+*.log
+.DS_Store
+docs
+README.md
+docker-compose.yml
+Dockerfile
