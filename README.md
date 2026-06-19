@@ -113,26 +113,27 @@ src/platforms/      — адаптеры Telegram и MAX
 src/lib/convex-client.ts — интеграция бота с Convex
 ```
 
-## Production
+## Production (Docker, без Convex login)
+
+Полный стек на вашем сервере: PostgreSQL + Convex + админка + бот.
 
 | Инструкция | Описание |
 |------------|----------|
-| **[docs/DOCKER.md](docs/DOCKER.md)** | Бот в Docker (пошагово) |
-| **[docs/DEPLOY.md](docs/DEPLOY.md)** | Полный деплой всех компонентов |
+| **[docs/DOCKER.md](docs/DOCKER.md)** | Self-hosted Docker (рекомендуется) |
+| **[docs/DEPLOY.md](docs/DEPLOY.md)** | Альтернатива: Convex Cloud |
 
 ```bash
-# Проверка перед деплоем
-npm run predeploy
+cp .env.example .env
+# Укажите PUBLIC_CONVEX_URL=http://ВАШ-IP:3210
+./scripts/setup-self-hosted.sh
+```
 
-# 1. База + админ-панель (Convex Cloud, не Docker)
-npm run deploy:convex
+`npx convex login` **не нужен** — всё через Docker и `.env`.
 
-# 2. Бот (Docker)
-cp .env.example .env   # CONVEX_URL, BOT_API_SECRET, BOT_SLUG
-./scripts/docker-deploy.sh
+### Только бот + облачный Convex
 
-# Бот (без Docker)
-npm run build && npm start
+```bash
+./scripts/docker-deploy.sh cloud
 ```
 
 На сервере бота в `.env` нужны только `CONVEX_URL`, `BOT_API_SECRET` и `BOT_SLUG`. Токены и контент — в админ-панели.

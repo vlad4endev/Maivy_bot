@@ -4,47 +4,34 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-MODE="${1:-prod}"
+MODE="${1:-self-hosted}"
 
 if ! command -v docker >/dev/null 2>&1; then
   echo "Docker не установлен."
-  echo "Установите Docker Desktop: https://docs.docker.com/get-docker/"
+  echo "https://docs.docker.com/get-docker/"
   exit 1
 fi
 
-if [[ ! -f .env ]]; then
-  echo "Файл .env не найден."
-  echo "Скопируйте шаблон и заполните переменные:"
-  echo "  cp .env.example .env"
-  exit 1
-fi
-
-# shellcheck disable=SC1091
-source .env 2>/dev/null || true
-
-if [[ "$MODE" == "dev" ]]; then
-  echo "Запуск бота в Docker (режим dev → convex dev на хосте)..."
-  docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
-else
-  if [[ -z "${CONVEX_URL:-}" ]]; then
-    echo "Ошибка: CONVEX_URL не задан в .env"
+case "$MODE" in
+  self-hosted|full|"")
+    exec "$ROOT/scripts/setup-self-hosted.sh"
+    ;;
+  cloud)
+    if [[ ! -f .env ]]; then
+      echo "Создайте .env с CONVEX_URL, BOT_API_SECRET, BOT_SLUG"
+      echo "  cp .env.example .env"
+      exit 1
+    fi
+    echo "Запуск только бота (облачный Convex)..."
+    docker compose -f docker-compose.cloud.yml up -d --build
+    ;;
+  *)
+    echo "Использование: $0 [self-hosted|cloud]"
     exit 1
-  fi
-  if [[ "$CONVEX_URL" == http://127.0.0.1:* ]] || [[ "$CONVEX_URL" == http://localhost:* ]]; then
-    echo "Предупреждение: CONVEX_URL указывает на localhost."
-    echo "Для production используйте URL из Convex Dashboard (https://....convex.cloud)."
-    echo "Для локальной разработки запустите: ./scripts/docker-deploy.sh dev"
-  fi
-  if [[ -z "${BOT_API_SECRET:-}" ]]; then
-    echo "Ошибка: BOT_API_SECRET не задан в .env"
-    exit 1
-  fi
-  echo "Запуск бота в Docker (production)..."
-  docker compose up -d --build
-fi
+    ;;
+esac
 
 echo ""
-docker compose ps
+docker compose ps 2>/dev/null || docker compose -f docker-compose.cloud.yml ps
 echo ""
-echo "Логи: docker compose logs -f bot"
-echo "Стоп:  docker compose down"
+echo "Логи: docker compose logs -f"

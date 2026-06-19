@@ -1,14 +1,98 @@
-# Production: бот в Docker + Convex Cloud (база и админка — в облаке Convex)
+# Полный self-hosted стек: PostgreSQL + Convex + админка + бот
+# Без npx convex login — только Docker и .env
 #
-# Перед запуском:
-#   1. npm run deploy:convex  — задеплоить базу и админ-панель
-#   2. cp .env.example .env   — заполнить CONVEX_URL, BOT_API_SECRET, BOT_SLUG
-#   3. docker compose up -d --build
+# Первый запуск:
+#   cp .env.example .env
+#   ./scripts/setup-self-hosted.sh
 #
-# Локальная разработка с convex dev на хосте:
-#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+# Обновление:
+#   git pull && docker compose up -d --build
 
 services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: maivy-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: convex
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required}
+      POSTGRES_DB: convex_self_hosted
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U convex -d convex_self_hosted"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  convex-backend:
+    image: ghcr.io/get-convex/convex-backend:latest
+    container_name: maivy-convex
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "${CONVEX_HTTP_PORT:-3210}:3210"
+      - "${CONVEX_SITE_PORT:-3211}:3211"
+    environment:
+      POSTGRES_URL: postgresql://convex:${POSTGRES_PASSWORD}@postgres:5432
+      DO_NOT_REQUIRE_SSL: "1"
+      INSTANCE_SECRET: ${INSTANCE_SECRET:?INSTANCE_SECRET required}
+      CONVEX_CLOUD_ORIGIN: ${PUBLIC_CONVEX_URL:-http://127.0.0.1:3210}
+      CONVEX_SITE_ORIGIN: ${PUBLIC_CONVEX_SITE_URL:-http://127.0.0.1:3211}
+      DISABLE_BEACON: "1"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3210/version || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+      start_period: 20s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  convex-deploy:
+    build:
+      context: .
+      dockerfile: docker/convex-init/Dockerfile
+    container_name: maivy-convex-deploy
+    depends_on:
+      convex-backend:
+        condition: service_healthy
+    environment:
+      CONVEX_SELF_HOSTED_URL: http://convex-backend:3210
+      CONVEX_SELF_HOSTED_ADMIN_KEY: ${CONVEX_ADMIN_KEY:?CONVEX_ADMIN_KEY required}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?ADMIN_PASSWORD required}
+      BOT_API_SECRET: ${BOT_API_SECRET:?BOT_API_SECRET required}
+    restart: "no"
+
+  admin:
+    build:
+      context: .
+      dockerfile: docker/admin/Dockerfile
+      args:
+        VITE_CONVEX_URL: ${PUBLIC_CONVEX_URL:?PUBLIC_CONVEX_URL required}
+    container_name: maivy-admin
+    restart: unless-stopped
+    depends_on:
+      convex-deploy:
+        condition: service_completed_successfully
+    ports:
+      - "${ADMIN_PORT:-8080}:80"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
   bot:
     build:
       context: .
@@ -16,10 +100,14 @@ services:
     image: maivy-bot:latest
     container_name: maivy-bot
     restart: unless-stopped
-    env_file:
-      - .env
+    depends_on:
+      convex-deploy:
+        condition: service_completed_successfully
+    environment:
+      CONVEX_URL: http://convex-backend:3210
+      BOT_API_SECRET: ${BOT_API_SECRET}
+      BOT_SLUG: ${BOT_SLUG:-maivy}
     volumes:
-      # Медиафайлы можно обновлять без пересборки образа
       - ./assets:/app/assets:ro
     logging:
       driver: json-file
@@ -32,3 +120,6 @@ services:
       timeout: 5s
       retries: 3
       start_period: 15s
+
+volumes:
+  postgres_data:

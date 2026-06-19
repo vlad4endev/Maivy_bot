@@ -1,208 +1,153 @@
-# Развёртывание Maivy Bot через Docker
+# Развёртывание Maivy Bot — полностью в Docker (без `npx convex login`)
+
+Весь стек работает на вашем сервере: **PostgreSQL**, **Convex (self-hosted)**, **админ-панель**, **бот**.
+
+`npx convex login` **не нужен** — ни на сервере, ни для работы бота.
+
+---
 
 ## Архитектура
 
-Проект состоит из **трёх частей**. В Docker помещается только **бот**:
-
-| Компонент | Где работает | Docker? |
-|-----------|--------------|---------|
-| **База данных + API** (Convex) | [Convex Cloud](https://convex.dev) | Нет — managed SaaS |
-| **Админ-панель** (React) | Convex Hosting | Нет — деплоится вместе с Convex |
-| **Бот** (Telegram + MAX) | Ваш VPS / сервер | **Да** |
-
-Convex — это облачная база данных. Её нельзя поднять в отдельном Docker-контейнере на production (как PostgreSQL). Бот в Docker подключается к Convex по HTTPS.
-
 ```
-┌─────────────────┐     HTTPS      ┌──────────────────────┐
-│  Docker: bot    │ ──────────────►│  Convex Cloud        │
-│  (Telegram/MAX) │                │  • база данных       │
-└─────────────────┘                │  • админ API         │
-                                   │  • админ-панель (UI) │
-                                   └──────────────────────┘
+┌─────────────── Docker на вашем VPS ───────────────────────────────┐
+│                                                                    │
+│  postgres ──► convex-backend ──► convex-deploy (один раз при up)  │
+│                      │                    │                        │
+│                      ├────────────────────┼──► bot (Telegram/MAX)  │
+│                      │                    │                        │
+│                      └────────────────────┴──► admin (nginx :8080) │
+│                                                                    │
+└────────────────────────────────────────────────────────────────────┘
 ```
+
+| Сервис | Порт | Назначение |
+|--------|------|------------|
+| `postgres` | внутренний | База данных |
+| `convex-backend` | 3210, 3211 | API + backend |
+| `admin` | 8080 | Админ-панель |
+| `bot` | — | Telegram + MAX |
 
 ---
 
-## Требования
-
-- [Docker Desktop](https://docs.docker.com/get-docker/) (macOS / Windows) или Docker Engine (Linux)
-- Аккаунт [Convex](https://convex.dev)
-- Токены Telegram / MAX (задаются в админ-панели)
-
----
-
-## Шаг 1. Установите Docker
-
-**macOS:**
+## Быстрый старт на сервере
 
 ```bash
-brew install --cask docker
-# или скачайте Docker Desktop с https://www.docker.com/products/docker-desktop/
-open -a Docker
-```
+git clone https://github.com/vlad4endev/Maivy_bot.git
+cd Maivy_bot
 
-Проверка:
-
-```bash
-docker --version
-docker compose version
-```
-
----
-
-## Шаг 2. Задеплойте базу и админ-панель (Convex)
-
-```bash
-npm run install:all
-npx convex login
-npm run deploy:convex
-```
-
-После деплоя скопируйте **production URL** (например `https://happy-animal-123.convex.cloud`).
-
-В [Convex Dashboard](https://dashboard.convex.dev) → **Settings → Environment Variables**:
-
-| Переменная | Значение |
-|------------|----------|
-| `ADMIN_PASSWORD` | Пароль для админ-панели |
-| `BOT_API_SECRET` | Случайная строка (мин. 32 символа) |
-
-Откройте URL админ-панели из вывода `deploy:convex`, войдите и:
-
-1. **Боты** → «Создать Maivy по умолчанию»
-2. **Настройки** → укажите токены Telegram/MAX, ссылки, медиа
-
----
-
-## Шаг 3. Настройте `.env` для Docker
-
-```bash
 cp .env.example .env
+# Отредактируйте PUBLIC_CONVEX_URL — укажите IP или домен сервера
+
+chmod +x scripts/setup-self-hosted.sh
+./scripts/setup-self-hosted.sh
 ```
 
-Заполните `.env`:
+Скрипт сам:
+1. Сгенерирует секреты (`POSTGRES_PASSWORD`, `INSTANCE_SECRET`, …)
+2. Поднимет PostgreSQL и Convex
+3. Создаст `CONVEX_ADMIN_KEY` (аналог login, но локально в Docker)
+4. Задеплоит функции Convex
+5. Запустит админку и бота
+
+---
+
+## Настройка `.env`
 
 ```env
-CONVEX_URL=https://ВАШ-DEPLOYMENT.convex.cloud
-BOT_API_SECRET=тот-же-секрет-что-в-convex-dashboard
+# Публичный адрес — браузер пользователя должен достучаться до Convex
+PUBLIC_CONVEX_URL=http://203.0.113.10:3210
+PUBLIC_CONVEX_SITE_URL=http://203.0.113.10:3211
+
+ADMIN_PORT=8080
 BOT_SLUG=maivy
+
+# Секреты (setup-self-hosted.sh сгенерирует автоматически)
+POSTGRES_PASSWORD=...
+INSTANCE_SECRET=...
+CONVEX_ADMIN_KEY=...
+ADMIN_PASSWORD=...
+BOT_API_SECRET=...
 ```
 
-`BOT_API_SECRET` должен **совпадать** с переменной в Convex Dashboard.
+**Важно:** `PUBLIC_CONVEX_URL` — это адрес, который видит **браузер** при открытии админки. Укажите внешний IP или домен сервера, не `localhost`.
 
 ---
 
-## Шаг 4. Медиафайлы
+## После первого запуска
 
-Положите файлы в `assets/` (монтируются в контейнер без пересборки):
-
-| Файл | Назначение |
-|------|------------|
-| `assets/welcome.jpg` | Фото профиля |
-| `assets/welcome-video.mp4` | Видео-кружочек |
+1. Откройте админку: `http://ВАШ-IP:8080`
+2. Войдите с паролем из `ADMIN_PASSWORD` в `.env`
+3. **Боты** → «Создать Maivy по умолчанию»
+4. **Настройки** → токены Telegram/MAX, ссылки, медиа
+5. Положите медиа в `assets/` и перезапустите бота при необходимости
 
 ---
 
-## Шаг 5. Запуск
+## Команды
 
 ```bash
-# Вариант A: скрипт
-chmod +x scripts/docker-deploy.sh
-./scripts/docker-deploy.sh
-
-# Вариант B: npm
-npm run docker:up
-
-# Вариант C: напрямую
+# Запуск / обновление
 docker compose up -d --build
-```
 
-Проверка:
-
-```bash
-docker compose ps
+# Логи
 docker compose logs -f bot
-```
+docker compose logs -f convex-backend
 
-Бот должен ответить на `/start` в Telegram.
+# Остановка
+docker compose down
+
+# Данные PostgreSQL сохраняются в volume postgres_data
+```
 
 ---
 
-## Локальная разработка (бот в Docker + convex dev на хосте)
-
-Если вы запускаете `npx convex dev` на машине, а бот хотите в контейнере:
-
-```bash
-# Терминал 1
-npx convex dev
-
-# Терминал 2 — .env с BOT_API_SECRET и BOT_SLUG
-./scripts/docker-deploy.sh dev
-```
-
-Контейнер подключится к `http://host.docker.internal:3210`.
-
----
-
-## Обновление
+## Обновление кода
 
 ```bash
 git pull
-
-# Convex + админка
-npm run deploy:convex
-
-# Бот
 docker compose up -d --build
 ```
 
-Конфигурация бота подтягивается из Convex каждые 60 секунд — перезапуск нужен только при обновлении **кода** бота.
+Сервис `convex-deploy` заново задеплоит функции Convex. Перезапуск бота подхватит новый код.
 
 ---
 
-## Полезные команды
+## Облачный Convex (опционально)
+
+Если всё же хотите Convex Cloud вместо self-hosted:
 
 ```bash
-docker compose logs -f bot      # логи
-docker compose restart bot      # перезапуск
-docker compose down             # остановка
-docker compose down -v            # остановка (volumes не используются для данных)
-npm run docker:down               # то же через npm
+cp .env.example .env
+# CONVEX_URL=https://....convex.cloud
+./scripts/docker-deploy.sh cloud
 ```
+
+Это запускает **только бота** через `docker-compose.cloud.yml`.
+
+---
+
+## Безопасность
+
+- Не коммитьте `.env` в git
+- Откройте в firewall только нужные порты: 8080 (админ), 3210 (если админ с другого хоста)
+- Для production используйте HTTPS через reverse proxy (nginx/Caddy + Let's Encrypt)
+- `BOT_API_SECRET` должен совпадать в Convex env и у бота (настраивается автоматически через `convex-deploy`)
 
 ---
 
 ## Troubleshooting
 
-**`docker: command not found`**  
-Установите Docker Desktop и перезапустите терминал.
+**Админка не подключается к Convex**  
+Проверьте `PUBLIC_CONVEX_URL` — должен быть доступен из браузера. Пересоберите admin: `docker compose up -d --build admin`.
 
-**«Настройте CONVEX_URL и BOT_API_SECRET»**  
-Проверьте файл `.env` в корне проекта (не `.env.local` — compose читает `.env`).
+**`CONVEX_ADMIN_KEY required`**  
+Запустите `./scripts/setup-self-hosted.sh` или вручную:
+```bash
+docker compose exec convex-backend ./generate_admin_key.sh
+```
 
-**«Бот не найден или отключён»**  
-Создайте бота в админ-панели, проверьте `BOT_SLUG`.
+**Бот не находит бота в базе**  
+Создайте бота в админке, проверьте `BOT_SLUG`.
 
-**«Telegram: токен не задан»**  
-Токены задаются в админке → **Настройки**, не в `.env`.
-
-**Бот не видит Convex из Docker (dev)**  
-Используйте `./scripts/docker-deploy.sh dev`, не production URL localhost.
-
-**Convex недоступен**  
-Бот использует fallback из `src/core/content.ts`, но аналитика и динамический контент не работают.
-
----
-
-## CI/CD
-
-GitHub Actions (`.github/workflows/deploy.yml`) деплоит Convex при push в `main`.
-
-Бот на VPS обновляйте вручную или добавьте отдельный workflow с SSH + `docker compose up -d --build`.
-
-Секреты для CI бота (пример):
-
-- `CONVEX_URL`
-- `BOT_API_SECRET`
-- `BOT_SLUG`
-- SSH-ключ к серверу
+**Порты заняты**  
+Измените `CONVEX_HTTP_PORT`, `ADMIN_PORT` в `.env`.

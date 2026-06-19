@@ -1,5 +1,20 @@
 # Деплой Maivy Bot
 
+## Рекомендуемый способ: self-hosted Docker
+
+**Без `npx convex login`.** Всё на вашем сервере: PostgreSQL, Convex, админка, бот.
+
+```bash
+cp .env.example .env
+./scripts/setup-self-hosted.sh
+```
+
+Подробно: **[docs/DOCKER.md](DOCKER.md)**
+
+---
+
+## Альтернатива: Convex Cloud
+
 Проект состоит из **трёх частей**, которые деплоятся отдельно:
 
 | Компонент | Где хостится | Команда |
