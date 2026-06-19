@@ -1,4 +1,7 @@
-import { paginationOptsValidator } from "convex/server";
+import {
+  paginationOptsValidator,
+  paginationResultValidator,
+} from "convex/server";
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { requireAdminSession } from "./lib/auth";
@@ -29,11 +32,7 @@ export const listByBot = query({
     platform: v.optional(platformValidator),
     search: v.optional(v.string()),
   },
-  returns: v.object({
-    page: v.array(userDocValidator),
-    isDone: v.boolean(),
-    continueCursor: v.string(),
-  }),
+  returns: paginationResultValidator(userDocValidator),
   handler: async (ctx, args) => {
     await requireAdminSession(ctx, args.token);
 
