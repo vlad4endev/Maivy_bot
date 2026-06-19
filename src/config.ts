@@ -1,5 +1,8 @@
-import "dotenv/config";
+import dotenv from "dotenv";
 import { resolveAssetPath } from "./lib/assets.js";
+
+dotenv.config();
+dotenv.config({ path: ".env.local", override: false });
 
 /** Минимальная конфигурация процесса — только подключение к Convex */
 export interface BootstrapConfig {

@@ -30,4 +30,15 @@ if [ -n "${BOT_API_SECRET:-}" ]; then
   npx convex env set BOT_API_SECRET "${BOT_API_SECRET}"
 fi
 
+if [ -n "${ADMIN_PASSWORD:-}" ]; then
+  echo "Создание бота по умолчанию (если ещё нет)..."
+  LOGIN_JSON="$(npx convex run adminAuth:login "{\"password\":\"${ADMIN_PASSWORD}\"}")"
+  ADMIN_TOKEN="$(node -e "const r=JSON.parse(process.argv[1]); process.stdout.write(r.token)" "${LOGIN_JSON}")"
+  if npx convex run seed:seedDefaultBot "{\"token\":\"${ADMIN_TOKEN}\"}" 2>/dev/null; then
+    echo "Бот maivy создан."
+  else
+    echo "Бот maivy уже существует — пропуск seed."
+  fi
+fi
+
 echo "Convex init завершён."
