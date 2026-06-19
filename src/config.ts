@@ -11,6 +11,16 @@ export interface BootstrapConfig {
   botApiSecret?: string;
 }
 
+export type MaxDeliveryMode = "polling" | "webhook";
+
+export interface MaxDeliveryConfig {
+  mode: MaxDeliveryMode;
+  webhookUrl?: string;
+  webhookSecret?: string;
+  webhookPort: number;
+  webhookPath?: string;
+}
+
 export interface AppContentConfig {
   botTagline: string;
   privacyPolicyUrl: string;
@@ -62,6 +72,26 @@ export function loadBootstrapConfig(): BootstrapConfig {
     botSlug: process.env.BOT_SLUG?.trim() ?? "maivy",
     convexUrl: process.env.CONVEX_URL?.trim() || undefined,
     botApiSecret: process.env.BOT_API_SECRET?.trim() || undefined,
+  };
+}
+
+/** Режим доставки событий MAX: webhook (production) или polling (локальная разработка). */
+export function loadMaxDeliveryConfig(): MaxDeliveryConfig {
+  const webhookUrl = process.env.MAX_WEBHOOK_URL?.trim();
+
+  if (webhookUrl) {
+    return {
+      mode: "webhook",
+      webhookUrl,
+      webhookSecret: process.env.MAX_WEBHOOK_SECRET?.trim() || undefined,
+      webhookPort: Number(process.env.MAX_WEBHOOK_PORT ?? process.env.PORT ?? 3000),
+      webhookPath: process.env.MAX_WEBHOOK_PATH?.trim() || undefined,
+    };
+  }
+
+  return {
+    mode: "polling",
+    webhookPort: Number(process.env.MAX_WEBHOOK_PORT ?? process.env.PORT ?? 3000),
   };
 }
 

@@ -1,5 +1,6 @@
 import dotenv from "dotenv";
 import { ConvexHttpClient } from "convex/browser";
+import { loadMaxDeliveryConfig } from "../src/config.js";
 
 dotenv.config();
 dotenv.config({ path: ".env.local", override: false });
@@ -45,9 +46,15 @@ async function main(): Promise<void> {
   }
 
   const client = new ConvexHttpClient(convexUrl);
+  let runtime: {
+    slug: string;
+    platforms: Array<"telegram" | "max">;
+    telegramToken?: string;
+    maxToken?: string;
+  } | null = null;
 
   try {
-    const runtime = await client.query("botApi:getBotContent" as never, {
+    runtime = await client.query("botApi:getBotContent" as never, {
       secret: botApiSecret,
       botSlug,
     } as never);
@@ -97,6 +104,24 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
+  const maxDelivery = loadMaxDeliveryConfig();
+  if (runtime?.platforms.includes("max")) {
+    console.log("");
+    if (maxDelivery.mode === "webhook") {
+      ok(`MAX webhook: ${maxDelivery.webhookUrl}`);
+      if (!maxDelivery.webhookSecret) {
+        console.log(
+          "  Рекомендуется задать MAX_WEBHOOK_SECRET (заголовок X-Max-Bot-Api-Secret)",
+        );
+      }
+    } else {
+      console.log(
+        "ℹ MAX: Long Polling (режим разработки). Для production задайте MAX_WEBHOOK_URL=https://...",
+      );
+    }
+  }
+
+  console.log("");
   console.log("Всё готово — можно запускать бота: npm run dev");
 }
 

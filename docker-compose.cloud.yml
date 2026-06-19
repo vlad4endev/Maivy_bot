@@ -11,6 +11,8 @@ services:
     restart: unless-stopped
     env_file:
       - .env
+    ports:
+      - "${MAX_WEBHOOK_PORT:-3000}:${MAX_WEBHOOK_PORT:-3000}"
     volumes:
       - ./assets:/app/assets:ro
     logging:

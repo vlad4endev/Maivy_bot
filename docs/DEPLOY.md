@@ -223,5 +223,14 @@ npm run build && sudo systemctl restart maivy-bot
 **Convex недоступен**  
 Бот использует fallback из `src/core/content.ts`, но без связи с Convex аналитика и динамический контент не работают.
 
-**MAX в production**  
-При необходимости webhook настройте отдельно через API MAX; по умолчанию бот использует long polling (`bot.start()`).
+**MAX в production**
+
+По [документации MAX](https://dev.max.ru/docs-api) для production нужен **Webhook** (Long Polling только для разработки). Задайте в `.env` на сервере бота:
+
+```env
+MAX_WEBHOOK_URL=https://ваш-домен/max/webhook
+MAX_WEBHOOK_SECRET=случайная_строка_5_символов
+MAX_WEBHOOK_PORT=3000
+```
+
+Nginx проксирует HTTPS:443 → `MAX_WEBHOOK_PORT`. Без `MAX_WEBHOOK_URL` бот использует Long Polling и снимает старые webhook-подписки (режим разработки).

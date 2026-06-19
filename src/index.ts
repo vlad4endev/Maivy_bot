@@ -2,6 +2,7 @@ import { createBotHandlers } from "./core/handlers.js";
 import {
   getEnvFallbackContent,
   loadBootstrapConfig,
+  loadMaxDeliveryConfig,
 } from "./config.js";
 import { loadBotRuntime } from "./lib/convex-client.js";
 import { getRuntimeState, setRuntimeState } from "./lib/runtime-state.js";
@@ -79,7 +80,10 @@ async function main(): Promise<void> {
         "MAX включён, но токен не задан. Укажите его в админ-панели → Настройки",
       );
     }
-    startMaxBot(runtime.maxToken, handlers, runtime.config, botOptions);
+    await startMaxBot(runtime.maxToken, handlers, runtime.config, {
+      ...botOptions,
+      delivery: loadMaxDeliveryConfig(),
+    });
   }
 
   setInterval(() => {

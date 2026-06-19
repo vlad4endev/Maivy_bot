@@ -107,6 +107,11 @@ services:
       CONVEX_URL: http://convex-backend:3210
       BOT_API_SECRET: ${BOT_API_SECRET}
       BOT_SLUG: ${BOT_SLUG:-maivy}
+      MAX_WEBHOOK_URL: ${MAX_WEBHOOK_URL:-}
+      MAX_WEBHOOK_SECRET: ${MAX_WEBHOOK_SECRET:-}
+      MAX_WEBHOOK_PORT: ${MAX_WEBHOOK_PORT:-3000}
+    ports:
+      - "${MAX_WEBHOOK_PORT:-3000}:${MAX_WEBHOOK_PORT:-3000}"
     volumes:
       - ./assets:/app/assets:ro
     logging:

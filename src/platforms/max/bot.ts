@@ -5,10 +5,16 @@ import {
   type Context,
 } from "@maxhub/max-bot-api";
 import type { BotAction, Keyboard as BotKeyboard } from "../../core/actions.js";
-import type { AppContentConfig } from "../../config.js";
+import type { AppContentConfig, MaxDeliveryConfig } from "../../config.js";
 import type { BotHandlers } from "../../core/handlers.js";
 import { setupMaxProfile } from "./setup.js";
 import { trackEvent, trackStart, type TrackUserInfo } from "../../lib/convex-client.js";
+import { MAX_UPDATE_TYPES } from "./constants.js";
+import {
+  clearMaxWebhookSubscriptions,
+  createMaxWebhookSubscription,
+} from "./subscriptions.js";
+import { startMaxWebhookServer } from "./webhook-server.js";
 
 type MaxAttachment = NonNullable<
   Parameters<Context["reply"]>[1]
@@ -18,6 +24,7 @@ type MaxAttachment = NonNullable<
 
 export interface MaxBotOptions {
   botSlug: string;
+  delivery: MaxDeliveryConfig;
   onBlockedUser?: () => void;
 }
 
@@ -39,14 +46,19 @@ function buildMaxKeyboard(keyboard?: BotKeyboard): MaxAttachment | undefined {
   return Keyboard.inlineKeyboard(buttons);
 }
 
-export function startMaxBot(
-  token: string,
+function attachMaxErrorHandler(bot: Bot): void {
+  bot.catch((error: unknown, ctx: Context) => {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(`MAX: ошибка (${ctx.updateType}):`, message);
+  });
+}
+
+function registerMaxHandlers(
+  bot: Bot,
   handlers: BotHandlers,
   config: AppContentConfig,
   options: MaxBotOptions,
-): Bot {
-  const bot = new Bot(token);
-
+): void {
   void bot.api.setMyCommands([
     { name: "start", description: "Начать работу с ботом" },
   ]);
@@ -58,23 +70,51 @@ export function startMaxBot(
 
   const getUserInfo = (ctx: Context): TrackUserInfo => ({
     platform: "max",
-    platformUserId: String(ctx.user?.user_id ?? ctx.message?.sender?.user_id ?? "unknown"),
-    firstName: ctx.user?.name ?? ctx.message?.sender?.name ?? undefined,
-    username: ctx.user?.username ?? ctx.message?.sender?.username ?? undefined,
+    platformUserId: String(
+      ctx.user?.user_id ??
+        ctx.callback?.user?.user_id ??
+        ctx.message?.sender?.user_id ??
+        "unknown",
+    ),
+    firstName:
+      ctx.user?.name ??
+      ctx.callback?.user?.name ??
+      ctx.message?.sender?.name ??
+      undefined,
+    username:
+      ctx.user?.username ??
+      ctx.callback?.user?.username ??
+      ctx.message?.sender?.username ??
+      undefined,
   });
 
   const runStart = async (ctx: Context) => {
-    const userInfo = getUserInfo(ctx);
-    const trackResult = await trackStart(options.botSlug, userInfo);
+    try {
+      const userInfo = getUserInfo(ctx);
+      const trackResult = await trackStart(options.botSlug, userInfo);
 
-    if (trackResult?.isBlocked) {
-      options.onBlockedUser?.();
-      await ctx.reply("Доступ ограничен.");
-      return;
+      if (trackResult?.isBlocked) {
+        options.onBlockedUser?.();
+        await ctx.reply("Доступ ограничен.");
+        return;
+      }
+
+      const firstName =
+        ctx.user?.name ??
+        ctx.message?.sender?.name ??
+        ctx.callback?.user?.name ??
+        undefined;
+
+      await executeMaxActions(ctx, handlers.handleStart(firstName), config);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error("MAX: ошибка /start:", message);
+      try {
+        await ctx.reply("Не удалось обработать команду. Попробуйте ещё раз.");
+      } catch {
+        // ignore secondary failure
+      }
     }
-
-    const firstName = ctx.user?.name ?? ctx.message?.sender?.name ?? undefined;
-    await executeMaxActions(ctx, handlers.handleStart(firstName), config);
   };
 
   bot.on("bot_started", runStart);
@@ -86,18 +126,55 @@ export function startMaxBot(
       return;
     }
 
-    void trackEvent(options.botSlug, getUserInfo(ctx), "callback", payload);
+    try {
+      void trackEvent(options.botSlug, getUserInfo(ctx), "callback", payload);
 
-    await executeMaxCallbackActions(
-      ctx,
-      handlers.handleCallback(payload, ctx.messageId),
-      config,
-    );
+      await executeMaxCallbackActions(
+        ctx,
+        handlers.handleCallback(payload, ctx.messageId),
+        config,
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error("MAX: ошибка callback:", payload, message);
+    }
   });
+}
 
-  void bot.start();
-  console.log("MAX бот запущен");
+export async function startMaxBot(
+  token: string,
+  handlers: BotHandlers,
+  config: AppContentConfig,
+  options: MaxBotOptions,
+): Promise<Bot> {
+  const bot = new Bot(token);
+  attachMaxErrorHandler(bot);
+  registerMaxHandlers(bot, handlers, config, options);
 
+  const me = await bot.api.getMyInfo();
+  console.log(`MAX: авторизация OK (@${me.username ?? me.name})`);
+
+  if (options.delivery.mode === "webhook") {
+    if (!options.delivery.webhookUrl?.startsWith("https://")) {
+      throw new Error(
+        "MAX_WEBHOOK_URL должен начинаться с https:// (требование platform-api.max.ru)",
+      );
+    }
+
+    await clearMaxWebhookSubscriptions(token);
+    await createMaxWebhookSubscription(
+      token,
+      options.delivery.webhookUrl,
+      options.delivery.webhookSecret,
+    );
+    console.log(`MAX webhook зарегистрирован: ${options.delivery.webhookUrl}`);
+    startMaxWebhookServer(bot, options.delivery);
+    return bot;
+  }
+
+  await clearMaxWebhookSubscriptions(token);
+  await bot.start({ allowedUpdates: [...MAX_UPDATE_TYPES] });
+  console.log("MAX бот запущен (Long Polling)");
   return bot;
 }
 
