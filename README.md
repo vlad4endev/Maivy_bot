@@ -115,17 +115,21 @@ src/lib/convex-client.ts — интеграция бота с Convex
 
 ## Production
 
-Полная инструкция: **[docs/DEPLOY.md](docs/DEPLOY.md)**
+| Инструкция | Описание |
+|------------|----------|
+| **[docs/DOCKER.md](docs/DOCKER.md)** | Бот в Docker (пошагово) |
+| **[docs/DEPLOY.md](docs/DEPLOY.md)** | Полный деплой всех компонентов |
 
 ```bash
 # Проверка перед деплоем
 npm run predeploy
 
-# Convex + админ-панель (production only!)
+# 1. База + админ-панель (Convex Cloud, не Docker)
 npm run deploy:convex
 
-# Бот (Docker)
-docker compose up -d --build
+# 2. Бот (Docker)
+cp .env.example .env   # CONVEX_URL, BOT_API_SECRET, BOT_SLUG
+./scripts/docker-deploy.sh
 
 # Бот (без Docker)
 npm run build && npm start
