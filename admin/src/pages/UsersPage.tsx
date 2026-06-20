@@ -4,7 +4,7 @@ import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { useAuth } from "../lib/auth";
 import { BotProvider, BotSelector } from "../components/BotSelector";
-import { LuMessageCircle, LuUsers, NAV_ICONS } from "../components/icons";
+import { LuMessageCircle, NAV_ICONS } from "../components/icons";
 import { PageHeader } from "../components/PageHeader";
 import {
   buildContactUrl,
