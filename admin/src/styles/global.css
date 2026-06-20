@@ -741,3 +741,250 @@ tr:hover td {
   font-size: 0.625rem;
   color: var(--text-muted);
 }
+
+/* Constructor */
+.constructor-page {
+  max-width: 1600px;
+}
+
+.constructor-layout {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+@media (max-width: 1100px) {
+  .constructor-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.constructor-flow-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.constructor-flow-header h3 {
+  font-size: 1rem;
+}
+
+.constructor-flow-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: calc(100vh - 220px);
+  overflow-y: auto;
+}
+
+.flow-node {
+  width: 100%;
+  text-align: left;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.flow-node:hover {
+  border-color: rgba(99, 102, 241, 0.35);
+  background: var(--bg-hover);
+}
+
+.flow-node.active {
+  border-color: var(--accent);
+  background: rgba(99, 102, 241, 0.1);
+}
+
+.flow-node.draft {
+  opacity: 0.75;
+}
+
+.flow-node-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.flow-node-title {
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.flow-node-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.flow-node-transitions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.flow-transition-chip {
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  background: var(--bg-elevated);
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.flow-node-incoming {
+  margin-top: 6px;
+  font-size: 0.6875rem;
+  color: var(--accent-hover);
+}
+
+.constructor-editor-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.constructor-editor-header h3 {
+  font-size: 1.125rem;
+}
+
+.constructor-editor-header p {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.constructor-section-form {
+  margin-bottom: 16px;
+}
+
+.constructor-preview-row {
+  margin-top: 8px;
+}
+
+.constructor-preview h4 {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.tg-preview-bubble {
+  background: #182533;
+  border-radius: 12px 12px 12px 4px;
+  padding: 12px 14px;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  margin-bottom: 10px;
+}
+
+.tg-preview-keyboard {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tg-preview-row {
+  display: flex;
+  gap: 6px;
+}
+
+.tg-preview-btn {
+  flex: 1;
+  text-align: center;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 0.8125rem;
+  color: #6ab3f3;
+}
+
+.constructor-save-bar {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.constructor-buttons-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.constructor-buttons-header h3 {
+  font-size: 1rem;
+}
+
+.constructor-buttons-header p {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.constructor-empty-buttons {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.constructor-button-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.constructor-button-item {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+}
+
+.constructor-button-item.disabled {
+  opacity: 0.5;
+}
+
+@media (max-width: 900px) {
+  .constructor-button-item {
+    grid-template-columns: 1fr;
+  }
+}
+
+.constructor-button-label {
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.constructor-button-pos {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.constructor-button-target {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8125rem;
+}
+
+.flow-arrow {
+  color: var(--accent-hover);
+  font-weight: 700;
+}

@@ -153,10 +153,44 @@ export const SECTION_TYPE_LABELS: Record<string, string> = {
 };
 
 export const CALLBACK_LABELS: Record<string, string> = {
-  about_more: "Узнать больше",
-  about_next: "Далее (шаблон)",
+  about_more: "Узнать больше (первый шаг)",
+  about_next: "Следующий шаг (шаблон)",
   demo: "Демо",
   try: "Попробовать",
   impl: "Внедрение",
-  menu: "В меню",
+  menu: "В главное меню",
 };
+
+export const SPECIAL_ACTIONS = [
+  { value: "about_more", label: CALLBACK_LABELS.about_more },
+  { value: "about_next", label: CALLBACK_LABELS.about_next },
+  { value: "menu", label: CALLBACK_LABELS.menu },
+] as const;
+
+export function resolveTargetLabel(
+  button: {
+    buttonType: string;
+    action?: string;
+    targetSectionSlug?: string;
+    targetSectionTitle?: string;
+    urlSource?: string;
+    url?: string;
+  },
+  sections: Array<{ id: string; label: string; slug: string }>,
+): string {
+  if (button.buttonType === "url") {
+    return button.urlSource ?? button.url ?? "Внешняя ссылка";
+  }
+  if (button.targetSectionTitle || button.targetSectionSlug) {
+    return button.targetSectionTitle ?? button.targetSectionSlug ?? "Экран";
+  }
+  if (button.action?.startsWith("section:")) {
+    const slug = button.action.slice(8);
+    const match = sections.find((s) => s.slug === slug);
+    return match?.label ?? slug;
+  }
+  if (button.action) {
+    return CALLBACK_LABELS[button.action] ?? button.action;
+  }
+  return "—";
+}

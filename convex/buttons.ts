@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { requireAdminSession } from "./lib/auth";
+import { actionForTargetSection } from "./lib/sectionKeyboard";
 import { normalizeUrl } from "./lib/urls";
 import { buttonTypeValidator, urlSourceValidator } from "./lib/validators";
 
@@ -14,12 +15,35 @@ const buttonDocValidator = v.object({
   text: v.string(),
   buttonType: buttonTypeValidator,
   action: v.optional(v.string()),
+  targetSectionId: v.optional(v.id("sections")),
   url: v.optional(v.string()),
   urlSource: urlSourceValidator,
   order: v.number(),
   isEnabled: v.boolean(),
   updatedAt: v.number(),
 });
+
+async function resolveButtonAction(
+  ctx: { db: { get: (id: import("./_generated/dataModel").Id<"sections">) => Promise<{ slug: string } | null> } },
+  buttonType: "callback" | "url",
+  action: string | undefined,
+  targetSectionId: import("./_generated/dataModel").Id<"sections"> | undefined,
+): Promise<string | undefined> {
+  if (buttonType !== "callback") {
+    return action;
+  }
+  if (targetSectionId) {
+    const target = await ctx.db.get(targetSectionId);
+    if (!target) {
+      throw new Error("Target section not found");
+    }
+    return actionForTargetSection(target.slug);
+  }
+  if (!action) {
+    throw new Error("Callback buttons require an action or target section");
+  }
+  return action;
+}
 
 export const listByBot = query({
   args: { token: v.string(), botId: v.id("bots") },
@@ -72,6 +96,7 @@ export const create = mutation({
     text: v.string(),
     buttonType: buttonTypeValidator,
     action: v.optional(v.string()),
+    targetSectionId: v.optional(v.id("sections")),
     url: v.optional(v.string()),
     urlSource: urlSourceValidator,
     order: v.number(),
@@ -81,9 +106,13 @@ export const create = mutation({
   handler: async (ctx, args) => {
     await requireAdminSession(ctx, args.token);
 
-    if (args.buttonType === "callback" && !args.action) {
-      throw new Error("Callback buttons require an action");
-    }
+    const resolvedAction = await resolveButtonAction(
+      ctx,
+      args.buttonType,
+      args.action,
+      args.targetSectionId,
+    );
+
     if (args.buttonType === "url" && !args.url && !args.urlSource) {
       throw new Error("URL buttons require a url or urlSource");
     }
@@ -95,7 +124,8 @@ export const create = mutation({
       col: args.col,
       text: args.text,
       buttonType: args.buttonType,
-      action: args.action,
+      action: resolvedAction,
+      targetSectionId: args.targetSectionId,
       url: args.url ? normalizeUrl(args.url) : undefined,
       urlSource: args.urlSource,
       order: args.order,
@@ -115,6 +145,7 @@ export const update = mutation({
     text: v.optional(v.string()),
     buttonType: v.optional(buttonTypeValidator),
     action: v.optional(v.string()),
+    targetSectionId: v.optional(v.id("sections")),
     url: v.optional(v.string()),
     urlSource: urlSourceValidator,
     order: v.optional(v.number()),
@@ -129,13 +160,37 @@ export const update = mutation({
       throw new Error("Button not found");
     }
 
+    const nextType = args.buttonType ?? button.buttonType;
+    const nextTargetSectionId =
+      args.targetSectionId !== undefined
+        ? args.targetSectionId
+        : button.targetSectionId;
+    const nextActionInput =
+      args.action !== undefined ? args.action : button.action;
+
+    const resolvedAction = await resolveButtonAction(
+      ctx,
+      nextType,
+      nextActionInput,
+      nextTargetSectionId,
+    );
+
     const updates: Record<string, unknown> = { updatedAt: Date.now() };
     if (args.keyboardId !== undefined) updates.keyboardId = args.keyboardId;
     if (args.row !== undefined) updates.row = args.row;
     if (args.col !== undefined) updates.col = args.col;
     if (args.text !== undefined) updates.text = args.text;
     if (args.buttonType !== undefined) updates.buttonType = args.buttonType;
-    if (args.action !== undefined) updates.action = args.action;
+    if (
+      args.action !== undefined ||
+      args.targetSectionId !== undefined ||
+      args.buttonType !== undefined
+    ) {
+      updates.action = resolvedAction;
+    }
+    if (args.targetSectionId !== undefined) {
+      updates.targetSectionId = args.targetSectionId;
+    }
     if (args.url !== undefined) {
       updates.url = args.url ? normalizeUrl(args.url) : undefined;
     }

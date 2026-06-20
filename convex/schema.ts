@@ -49,6 +49,7 @@ export default defineSchema({
       v.literal("section"),
       v.literal("system"),
     ),
+    keyboardId: v.optional(v.string()),
     isPublished: v.boolean(),
     parseMode: v.union(v.literal("HTML"), v.literal("Markdown")),
     updatedAt: v.number(),
@@ -65,6 +66,7 @@ export default defineSchema({
     text: v.string(),
     buttonType: v.union(v.literal("callback"), v.literal("url")),
     action: v.optional(v.string()),
+    targetSectionId: v.optional(v.id("sections")),
     url: v.optional(v.string()),
     urlSource: v.optional(
       v.union(

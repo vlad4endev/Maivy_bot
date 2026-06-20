@@ -23,3 +23,8 @@ export function parseAboutNext(payload: string): number | undefined {
   }
   return Number(match[1]);
 }
+
+export function parseSectionGoto(payload: string): string | undefined {
+  const match = /^section:(.+)$/.exec(payload);
+  return match?.[1];
+}

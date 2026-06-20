@@ -9,6 +9,7 @@ export interface DynamicSection {
   body: string;
   order: number;
   sectionType: string;
+  keyboardId?: string;
   parseMode: string;
 }
 

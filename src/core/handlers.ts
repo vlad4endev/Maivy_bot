@@ -1,5 +1,5 @@
 import type { BotAction } from "./actions.js";
-import { Callback, parseAboutNext, parseAboutStep } from "./callbacks.js";
+import { Callback, parseAboutNext, parseAboutStep, parseSectionGoto } from "./callbacks.js";
 import {
   buildDemoText,
   buildImplementText,
@@ -12,9 +12,11 @@ import {
   getAboutStepTextFromContent,
   getAboutSteps,
   getMenuText,
+  getSectionBySlug,
   getSectionText,
   getWelcomeText,
   resolveKeyboard,
+  resolveSectionKeyboardId,
 } from "./dynamic-content.js";
 import {
   aboutStepKeyboard,
@@ -88,6 +90,11 @@ export function createBotHandlers() {
     const aboutNext = parseAboutNext(payload);
     if (aboutNext !== undefined) {
       return aboutStepActions(aboutNext, messageId, totalAboutSteps);
+    }
+
+    const sectionSlug = parseSectionGoto(payload);
+    if (sectionSlug) {
+      return navigateToSection(sectionSlug, messageId);
     }
 
     switch (payload) {
@@ -168,6 +175,62 @@ export function createBotHandlers() {
           },
         ];
     }
+  }
+
+  function navigateToSection(slug: string, messageId?: string): BotAction[] {
+    const content = getEffectiveContent();
+    const section = getSectionBySlug(content, slug);
+
+    if (!section) {
+      return [
+        {
+          type: "send_text",
+          text: "Раздел не найден.",
+          keyboard: resolveKeyboard(content, "back_menu", backToMenuKeyboard),
+        },
+      ];
+    }
+
+    const keyboardId = resolveSectionKeyboardId(section);
+    const aboutSteps = content ? getAboutSteps(content) : null;
+    const keyboard = resolveKeyboard(
+      content,
+      keyboardId,
+      keyboardId === "about_step"
+        ? () => aboutStepKeyboard(1, aboutSteps?.length ?? getAboutStepCount())
+        : keyboardId === "main_menu"
+          ? mainMenuKeyboard
+          : backToMenuKeyboard,
+      keyboardId === "about_step"
+        ? { aboutStep: 1, totalAboutSteps: aboutSteps?.length ?? getAboutStepCount() }
+        : undefined,
+    );
+
+    let text = section.body;
+    if (section.sectionType === "about_step" && section.title) {
+      text = `<b>${section.title}</b>\n\n${section.body}`;
+    }
+
+    if (messageId) {
+      return [
+        {
+          type: "edit_text",
+          messageId,
+          text,
+          keyboard,
+          parseMode: "HTML",
+        },
+      ];
+    }
+
+    return [
+      {
+        type: "send_text",
+        text,
+        keyboard,
+        parseMode: "HTML",
+      },
+    ];
   }
 
   function aboutStepActions(

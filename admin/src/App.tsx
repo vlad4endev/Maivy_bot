@@ -5,8 +5,7 @@ import { LoginPage } from "./pages/LoginPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { BotsPage } from "./pages/BotsPage";
 import { UsersPage } from "./pages/UsersPage";
-import { SectionsPage } from "./pages/SectionsPage";
-import { ButtonsPage } from "./pages/ButtonsPage";
+import { ConstructorPage } from "./pages/ConstructorPage";
 import { AnalyticsPage } from "./pages/AnalyticsPage";
 import { EventsPage } from "./pages/EventsPage";
 import { SettingsPage } from "./pages/SettingsPage";
@@ -52,8 +51,9 @@ export function App() {
         <Route index element={<DashboardPage />} />
         <Route path="bots" element={<BotsPage />} />
         <Route path="users" element={<UsersPage />} />
-        <Route path="sections" element={<SectionsPage />} />
-        <Route path="buttons" element={<ButtonsPage />} />
+        <Route path="constructor" element={<ConstructorPage />} />
+        <Route path="sections" element={<Navigate to="/constructor" replace />} />
+        <Route path="buttons" element={<Navigate to="/constructor" replace />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route path="analytics" element={<AnalyticsPage />} />
         <Route path="events" element={<EventsPage />} />

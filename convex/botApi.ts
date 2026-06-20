@@ -104,6 +104,7 @@ export const getBotContent = query({
         body: s.body,
         order: s.order,
         sectionType: s.sectionType,
+        keyboardId: s.keyboardId,
         parseMode: s.parseMode,
       }));
 

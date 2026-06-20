@@ -1,13 +1,12 @@
 import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../lib/auth";
-import { APP_ICON, LuLogOut, NAV_ICONS } from "./icons";
+import { APP_ICON, FiLogOut, NAV_ICONS } from "./icons";
 
 const NAV_ITEMS = [
   { to: "/", icon: NAV_ICONS.dashboard, label: "Дашборд", end: true },
   { to: "/bots", icon: NAV_ICONS.bots, label: "Боты" },
   { to: "/users", icon: NAV_ICONS.users, label: "Пользователи" },
-  { to: "/sections", icon: NAV_ICONS.sections, label: "Разделы" },
-  { to: "/buttons", icon: NAV_ICONS.buttons, label: "Кнопки" },
+  { to: "/constructor", icon: NAV_ICONS.constructor, label: "Конструктор" },
   { to: "/settings", icon: NAV_ICONS.settings, label: "Настройки" },
   { to: "/analytics", icon: NAV_ICONS.analytics, label: "Аналитика" },
   { to: "/events", icon: NAV_ICONS.events, label: "События" },
@@ -38,13 +37,13 @@ export function Layout() {
               <NavLink
                 key={item.to}
                 to={item.to}
-                end={item.end}
+                end={"end" in item ? item.end : undefined}
                 className={({ isActive }) =>
                   `nav-link${isActive ? " active" : ""}`
                 }
               >
                 <span className="nav-icon" aria-hidden="true">
-                  <Icon size={18} strokeWidth={2} />
+                  <Icon size={18} />
                 </span>
                 {item.label}
               </NavLink>
@@ -58,7 +57,7 @@ export function Layout() {
             style={{ width: "100%" }}
             onClick={() => void logout()}
           >
-            <LuLogOut size={16} strokeWidth={2} />
+            <FiLogOut size={16} />
             Выйти
           </button>
         </div>

@@ -237,22 +237,35 @@ Maivy — платформа, которая меняет то, как бизн�
     });
 
     const defaultButtons = [
-      { keyboardId: "main_menu", row: 0, col: 0, text: "Узнать больше о Maivy", buttonType: "callback" as const, action: "about_more", order: 0 },
-      { keyboardId: "main_menu", row: 1, col: 0, text: "Посмотреть, как работает Maivy", buttonType: "callback" as const, action: "demo", order: 1 },
-      { keyboardId: "main_menu", row: 2, col: 0, text: "Попробовать Maivy на практике", buttonType: "callback" as const, action: "try", order: 2 },
-      { keyboardId: "main_menu", row: 3, col: 0, text: "Хочу внедрить Maivy", buttonType: "callback" as const, action: "impl", order: 3 },
+      { keyboardId: "main_menu", row: 0, col: 0, text: "Узнать больше о Maivy", buttonType: "callback" as const, action: "about_more", targetSlug: "about_1", order: 0 },
+      { keyboardId: "main_menu", row: 1, col: 0, text: "Посмотреть, как работает Maivy", buttonType: "callback" as const, action: "demo", targetSlug: "demo", order: 1 },
+      { keyboardId: "main_menu", row: 2, col: 0, text: "Попробовать Maivy на практике", buttonType: "callback" as const, action: "try", targetSlug: "try", order: 2 },
+      { keyboardId: "main_menu", row: 3, col: 0, text: "Хочу внедрить Maivy", buttonType: "callback" as const, action: "impl", targetSlug: "impl", order: 3 },
       { keyboardId: "about_step", row: 0, col: 0, text: "Далее →", buttonType: "callback" as const, action: "about_next", order: 0 },
-      { keyboardId: "about_step", row: 1, col: 0, text: "← В меню", buttonType: "callback" as const, action: "menu", order: 1 },
-      { keyboardId: "back_menu", row: 0, col: 0, text: "← В меню", buttonType: "callback" as const, action: "menu", order: 0 },
+      { keyboardId: "about_step", row: 1, col: 0, text: "← В меню", buttonType: "callback" as const, action: "menu", targetSlug: "menu", order: 1 },
+      { keyboardId: "back_menu", row: 0, col: 0, text: "← В меню", buttonType: "callback" as const, action: "menu", targetSlug: "menu", order: 0 },
       { keyboardId: "demo", row: 0, col: 0, text: "▶️ Смотреть видео в Loom", buttonType: "url" as const, urlSource: "loomVideoUrl" as const, order: 0 },
-      { keyboardId: "demo", row: 1, col: 0, text: "← В меню", buttonType: "callback" as const, action: "menu", order: 1 },
+      { keyboardId: "demo", row: 1, col: 0, text: "← В меню", buttonType: "callback" as const, action: "menu", targetSlug: "menu", order: 1 },
       { keyboardId: "try", row: 0, col: 0, text: "🛒 Открыть Гростер", buttonType: "url" as const, urlSource: "grosterUrl" as const, order: 0 },
-      { keyboardId: "try", row: 1, col: 0, text: "← В меню", buttonType: "callback" as const, action: "menu", order: 1 },
+      { keyboardId: "try", row: 1, col: 0, text: "← В меню", buttonType: "callback" as const, action: "menu", targetSlug: "menu", order: 1 },
       { keyboardId: "impl", row: 0, col: 0, text: "✉️ Написать @daerit", buttonType: "url" as const, urlSource: "contactUrl" as const, order: 0 },
-      { keyboardId: "impl", row: 1, col: 0, text: "← В меню", buttonType: "callback" as const, action: "menu", order: 1 },
+      { keyboardId: "impl", row: 1, col: 0, text: "← В меню", buttonType: "callback" as const, action: "menu", targetSlug: "menu", order: 1 },
     ];
 
+    const seededSections = await ctx.db
+      .query("sections")
+      .withIndex("by_bot", (q) => q.eq("botId", botId))
+      .collect();
+    const slugToSectionId = new Map(
+      seededSections.map((section) => [section.slug, section._id]),
+    );
+
     for (const btn of defaultButtons) {
+      const targetSectionId =
+        "targetSlug" in btn && btn.targetSlug
+          ? slugToSectionId.get(btn.targetSlug)
+          : undefined;
+
       await ctx.db.insert("keyboardButtons", {
         botId,
         keyboardId: btn.keyboardId,
@@ -260,7 +273,11 @@ Maivy — платформа, которая меняет то, как бизн�
         col: btn.col,
         text: btn.text,
         buttonType: btn.buttonType,
-        action: btn.action,
+        action:
+          targetSectionId && "targetSlug" in btn && btn.targetSlug
+            ? `section:${btn.targetSlug}`
+            : btn.action,
+        targetSectionId,
         urlSource: "urlSource" in btn ? btn.urlSource : undefined,
         order: btn.order,
         isEnabled: true,

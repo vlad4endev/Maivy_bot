@@ -2,6 +2,22 @@ import type { Keyboard } from "./actions.js";
 import { Callback } from "./callbacks.js";
 import type { BotContentSnapshot, DynamicSection } from "../lib/convex-client.js";
 
+export function resolveSectionKeyboardId(section: DynamicSection & { keyboardId?: string }): string {
+  if (section.keyboardId) {
+    return section.keyboardId;
+  }
+  if (section.sectionType === "welcome") {
+    return "main_menu";
+  }
+  if (section.sectionType === "about_step") {
+    return "about_step";
+  }
+  if (section.slug === "menu") {
+    return "main_menu";
+  }
+  return section.slug;
+}
+
 export function getSectionBySlug(
   content: BotContentSnapshot | null,
   slug: string,
