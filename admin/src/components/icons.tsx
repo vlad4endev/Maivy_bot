@@ -1,4 +1,5 @@
 import type { IconType } from "react-icons";
+import { Bot as LuBot } from "lucide-react";
 import {
   FiActivity,
   FiBarChart2,
@@ -44,3 +45,5 @@ export {
   FiUsers,
   FiZap,
 };
+
+export { LuBot };
