@@ -4,7 +4,7 @@ import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { useAuth } from "../lib/auth";
 import { BotProvider, BotSelector } from "../components/BotSelector";
-import { LuActivity, LuBot, LuUsers, LuZap, NAV_ICONS } from "../components/icons";
+import { FiActivity, FiCpu, FiUsers, FiZap, NAV_ICONS } from "../components/icons";
 import { PageHeader } from "../components/PageHeader";
 import { formatRelative } from "../lib/utils";
 
@@ -54,7 +54,7 @@ export function DashboardPage() {
                 <div className="stat-card-top">
                   <div className="label">Боты</div>
                   <span className="stat-icon" aria-hidden="true">
-                    <LuBot size={18} />
+                    <FiCpu size={18} />
                   </span>
                 </div>
                 <div className="value">{stats.totalBots}</div>
@@ -64,7 +64,7 @@ export function DashboardPage() {
                 <div className="stat-card-top">
                   <div className="label">Пользователи</div>
                   <span className="stat-icon" aria-hidden="true">
-                    <LuUsers size={18} />
+                    <FiUsers size={18} />
                   </span>
                 </div>
                 <div className="value">{stats.totalUsers}</div>
@@ -76,7 +76,7 @@ export function DashboardPage() {
                 <div className="stat-card-top">
                   <div className="label">События сегодня</div>
                   <span className="stat-icon" aria-hidden="true">
-                    <LuZap size={18} />
+                    <FiZap size={18} />
                   </span>
                 </div>
                 <div className="value">{stats.eventsToday}</div>
@@ -86,7 +86,7 @@ export function DashboardPage() {
                 <div className="stat-card-top">
                   <div className="label">Всего событий</div>
                   <span className="stat-icon" aria-hidden="true">
-                    <LuActivity size={18} />
+                    <FiActivity size={18} />
                   </span>
                 </div>
                 <div className="value">{stats.totalEvents}</div>

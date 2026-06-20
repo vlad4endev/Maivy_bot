@@ -12,7 +12,7 @@ export function PageHeader({ icon: Icon, title, description, actions }: PageHead
     <div className="page-header">
       <div className="page-header-main">
         <span className="page-header-icon" aria-hidden="true">
-          <Icon size={22} strokeWidth={2} />
+          <Icon size={22} />
         </span>
         <div>
           <h2>{title}</h2>

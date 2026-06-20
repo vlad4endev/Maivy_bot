@@ -4,7 +4,7 @@ import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { useAuth } from "../lib/auth";
 import { BotProvider, BotSelector } from "../components/BotSelector";
-import { LuMessageCircle, NAV_ICONS } from "../components/icons";
+import { FiMessageCircle, NAV_ICONS } from "../components/icons";
 import { PageHeader } from "../components/PageHeader";
 import {
   buildContactUrl,
@@ -232,7 +232,7 @@ export function UsersPage() {
                                       : "Открыть чат по ID (нужен Telegram)"
                                 }
                               >
-                                <LuMessageCircle size={14} strokeWidth={2} />
+                                <FiMessageCircle size={14} />
                                 Открыть чат
                               </button>
                             )}
