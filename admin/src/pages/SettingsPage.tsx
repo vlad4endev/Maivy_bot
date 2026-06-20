@@ -12,6 +12,11 @@ interface SettingsForm {
   platforms: Array<"telegram" | "max">;
   telegramToken: string;
   maxToken: string;
+  maxWebhookUrl: string;
+  maxWebhookSecret: string;
+  maxWebhookPath: string;
+  webhookPort: string;
+  maxBotUsername: string;
   enabled: boolean;
   botTagline: string;
   shortDescription: string;
@@ -27,6 +32,11 @@ interface SettingsForm {
 const ENV_FIELDS = [
   { key: "TELEGRAM_BOT_TOKEN", label: "Telegram Token", tab: "platforms" },
   { key: "MAX_BOT_TOKEN", label: "MAX Token", tab: "platforms" },
+  { key: "MAX_WEBHOOK_URL", label: "MAX Webhook URL", tab: "platforms" },
+  { key: "MAX_WEBHOOK_SECRET", label: "MAX Webhook Secret", tab: "platforms" },
+  { key: "MAX_WEBHOOK_PATH", label: "MAX Webhook Path", tab: "platforms" },
+  { key: "WEBHOOK_PORT", label: "Webhook Port", tab: "platforms" },
+  { key: "MAX_BOT_USERNAME", label: "MAX Bot Username", tab: "platforms" },
   { key: "ENABLED_PLATFORMS", label: "Платформы", tab: "platforms" },
   { key: "BOT_TAGLINE", label: "Tagline профиля", tab: "content" },
   { key: "BOT_SHORT_DESCRIPTION", label: "Краткое описание", tab: "content" },
@@ -43,6 +53,11 @@ function botToForm(bot: {
   platforms: Array<"telegram" | "max">;
   telegramToken?: string;
   maxToken?: string;
+  maxWebhookUrl?: string;
+  maxWebhookSecret?: string;
+  maxWebhookPath?: string;
+  webhookPort?: number;
+  maxBotUsername?: string;
   enabled: boolean;
   settings: {
     botTagline: string;
@@ -60,6 +75,11 @@ function botToForm(bot: {
     platforms: bot.platforms,
     telegramToken: bot.telegramToken ?? "",
     maxToken: bot.maxToken ?? "",
+    maxWebhookUrl: bot.maxWebhookUrl ?? "",
+    maxWebhookSecret: bot.maxWebhookSecret ?? "",
+    maxWebhookPath: bot.maxWebhookPath ?? "/max/webhook",
+    webhookPort: String(bot.webhookPort ?? 3000),
+    maxBotUsername: bot.maxBotUsername ?? "",
     enabled: bot.enabled,
     botTagline: bot.settings.botTagline,
     shortDescription: bot.settings.shortDescription ?? "",
@@ -124,6 +144,30 @@ export function SettingsPage() {
       return;
     }
 
+    if (form.platforms.includes("max") && !form.maxToken.trim()) {
+      setError("MAX включён: укажите токен из business.max.ru");
+      return;
+    }
+
+    if (
+      form.maxWebhookSecret &&
+      (form.maxWebhookSecret.length < 5 || form.maxWebhookSecret.length > 256)
+    ) {
+      setError("MAX_WEBHOOK_SECRET: от 5 до 256 символов (a-z, A-Z, 0-9, _ и -)");
+      return;
+    }
+
+    if (form.maxWebhookUrl && !form.maxWebhookUrl.startsWith("https://")) {
+      setError("MAX_WEBHOOK_URL должен начинаться с https://");
+      return;
+    }
+
+    const webhookPort = Number(form.webhookPort);
+    if (!Number.isFinite(webhookPort) || webhookPort < 1 || webhookPort > 65535) {
+      setError("WEBHOOK_PORT: укажите порт от 1 до 65535");
+      return;
+    }
+
     setError("");
     setSaving(true);
 
@@ -139,6 +183,11 @@ export function SettingsPage() {
         platforms: form.platforms,
         telegramToken: form.telegramToken || undefined,
         maxToken: form.maxToken || undefined,
+        maxWebhookUrl: form.maxWebhookUrl.trim() || undefined,
+        maxWebhookSecret: form.maxWebhookSecret.trim() || undefined,
+        maxWebhookPath: form.maxWebhookPath.trim() || undefined,
+        webhookPort,
+        maxBotUsername: form.maxBotUsername.trim() || undefined,
         enabled: form.enabled,
         settings: {
           botTagline: form.botTagline,
@@ -182,12 +231,12 @@ export function SettingsPage() {
 
         <div className="card" style={{ marginBottom: 20, background: "rgba(99,102,241,0.08)", borderColor: "rgba(99,102,241,0.3)" }}>
           <p style={{ fontSize: "0.875rem", lineHeight: 1.6 }}>
-            <strong>В .env на сервере</strong> остаются только 3 переменные для подключения к Convex:
+            <strong>В .env на сервере</strong> остаются только переменные подключения к Convex:
             <code style={{ margin: "0 4px" }}>CONVEX_URL</code>,
             <code style={{ margin: "0 4px" }}>BOT_API_SECRET</code>,
             <code style={{ margin: "0 4px" }}>BOT_SLUG</code>.
-            Все остальные настройки — здесь. Бот подхватывает изменения автоматически (~60 сек).
-            Изменение токенов и платформ требует перезапуска процесса бота.
+            Токены и webhook MAX — на вкладке «Платформы». Бот подхватывает изменения автоматически (~60 сек).
+            Изменение токенов, webhook и платформ требует перезапуска процесса бота.
           </p>
         </div>
 
@@ -266,19 +315,142 @@ export function SettingsPage() {
                       placeholder="123456:ABC-DEF..."
                       autoComplete="off"
                     />
+                    <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: 4 }}>
+                      Токен от @BotFather. Обязателен, если включён Telegram.
+                    </p>
                   </div>
 
-                  <div className="form-group">
-                    <label htmlFor="maxToken">MAX_BOT_TOKEN</label>
-                    <input
-                      id="maxToken"
-                      type="password"
-                      value={form.maxToken}
-                      onChange={(e) => updateField("maxToken", e.target.value)}
-                      placeholder="Токен из business.max.ru"
-                      autoComplete="off"
-                    />
-                  </div>
+                  {form.platforms.includes("max") && (
+                    <div
+                      style={{
+                        marginTop: 20,
+                        paddingTop: 20,
+                        borderTop: "1px solid var(--border)",
+                      }}
+                    >
+                      <h3 style={{ fontSize: "1rem", marginBottom: 8 }}>MAX — обязательные настройки</h3>
+                      <p style={{ fontSize: "0.8125rem", color: "var(--text-muted)", marginBottom: 16, lineHeight: 1.5 }}>
+                        По{" "}
+                        <a href="https://dev.max.ru/docs/chatbots/bots-coding/prepare" target="_blank" rel="noreferrer">
+                          документации MAX
+                        </a>
+                        : токен из{" "}
+                        <a href="https://business.max.ru" target="_blank" rel="noreferrer">
+                          business.max.ru
+                        </a>
+                        , для production — HTTPS Webhook (Long Polling только для разработки).
+                      </p>
+
+                      <div className="form-group">
+                        <label htmlFor="maxToken">
+                          MAX_BOT_TOKEN <span style={{ color: "var(--danger)" }}>*</span>
+                        </label>
+                        <input
+                          id="maxToken"
+                          type="password"
+                          value={form.maxToken}
+                          onChange={(e) => updateField("maxToken", e.target.value)}
+                          placeholder="Чат-боты → Расширенные настройки → Настроить"
+                          autoComplete="off"
+                          required={form.platforms.includes("max")}
+                        />
+                        <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: 4 }}>
+                          Заголовок Authorization при запросах к platform-api.max.ru
+                        </p>
+                      </div>
+
+                      <div className="form-group">
+                        <label htmlFor="maxWebhookUrl">
+                          MAX_WEBHOOK_URL <span style={{ color: "var(--warning, #f59e0b)" }}>production</span>
+                        </label>
+                        <input
+                          id="maxWebhookUrl"
+                          type="url"
+                          value={form.maxWebhookUrl}
+                          onChange={(e) => updateField("maxWebhookUrl", e.target.value)}
+                          placeholder="https://ваш-домен/max/webhook"
+                        />
+                        <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: 4 }}>
+                          HTTPS с доверенным сертификатом. Без URL бот работает в Long Polling (только dev).
+                        </p>
+                      </div>
+
+                      <div className="form-group">
+                        <label htmlFor="maxWebhookSecret">MAX_WEBHOOK_SECRET</label>
+                        <input
+                          id="maxWebhookSecret"
+                          type="password"
+                          value={form.maxWebhookSecret}
+                          onChange={(e) => updateField("maxWebhookSecret", e.target.value)}
+                          placeholder="Случайная строка 5–256 символов"
+                          autoComplete="off"
+                        />
+                        <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: 4 }}>
+                          Проверяется в заголовке X-Max-Bot-Api-Secret. Рекомендуется для production.
+                        </p>
+                      </div>
+
+                      <div className="form-row">
+                        <div className="form-group">
+                          <label htmlFor="maxWebhookPath">MAX_WEBHOOK_PATH</label>
+                          <input
+                            id="maxWebhookPath"
+                            value={form.maxWebhookPath}
+                            onChange={(e) => updateField("maxWebhookPath", e.target.value)}
+                            placeholder="/max/webhook"
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label htmlFor="webhookPort">WEBHOOK_PORT</label>
+                          <input
+                            id="webhookPort"
+                            type="number"
+                            min={1}
+                            max={65535}
+                            value={form.webhookPort}
+                            onChange={(e) => updateField("webhookPort", e.target.value)}
+                            placeholder="3000"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="form-group">
+                        <label htmlFor="maxBotUsername">MAX_BOT_USERNAME</label>
+                        <input
+                          id="maxBotUsername"
+                          value={form.maxBotUsername}
+                          onChange={(e) => updateField("maxBotUsername", e.target.value)}
+                          placeholder="id123456789_bot"
+                        />
+                        <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: 4 }}>
+                          Ник бота на платформе MAX (для диплинка{" "}
+                          {form.maxBotUsername ? (
+                            <code>
+                              https://max.ru/{form.maxBotUsername.replace(/^@/, "")}?start=payload
+                            </code>
+                          ) : (
+                            <code>https://max.ru/&lt;ник&gt;?start=...</code>
+                          )}
+                          ). До 128 символов в payload.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {!form.platforms.includes("max") && (
+                    <div className="form-group">
+                      <label htmlFor="maxToken">MAX_BOT_TOKEN</label>
+                      <input
+                        id="maxToken"
+                        type="password"
+                        value={form.maxToken}
+                        onChange={(e) => updateField("maxToken", e.target.value)}
+                        placeholder="Включите платформу MAX для полных настроек"
+                        autoComplete="off"
+                        disabled
+                      />
+                    </div>
+                  )}
                 </>
               )}
 

@@ -14,7 +14,7 @@ import {
   clearMaxWebhookSubscriptions,
   createMaxWebhookSubscription,
 } from "./subscriptions.js";
-import { startMaxWebhookServer } from "./webhook-server.js";
+import { registerMaxWebhook } from "./webhook-server.js";
 
 type MaxAttachment = NonNullable<
   Parameters<Context["reply"]>[1]
@@ -168,7 +168,7 @@ export async function startMaxBot(
       options.delivery.webhookSecret,
     );
     console.log(`MAX webhook зарегистрирован: ${options.delivery.webhookUrl}`);
-    startMaxWebhookServer(bot, options.delivery);
+    registerMaxWebhook(bot, options.delivery);
     return bot;
   }
 

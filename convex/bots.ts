@@ -12,6 +12,11 @@ const botDocValidator = v.object({
   platforms: v.array(platformValidator),
   telegramToken: v.optional(v.string()),
   maxToken: v.optional(v.string()),
+  maxWebhookUrl: v.optional(v.string()),
+  maxWebhookSecret: v.optional(v.string()),
+  maxWebhookPath: v.optional(v.string()),
+  webhookPort: v.optional(v.number()),
+  maxBotUsername: v.optional(v.string()),
   enabled: v.boolean(),
   settings: botSettingsValidator,
   createdAt: v.number(),
@@ -57,6 +62,11 @@ export const create = mutation({
     platforms: v.array(platformValidator),
     telegramToken: v.optional(v.string()),
     maxToken: v.optional(v.string()),
+    maxWebhookUrl: v.optional(v.string()),
+    maxWebhookSecret: v.optional(v.string()),
+    maxWebhookPath: v.optional(v.string()),
+    webhookPort: v.optional(v.number()),
+    maxBotUsername: v.optional(v.string()),
     enabled: v.boolean(),
     settings: botSettingsValidator,
   },
@@ -81,6 +91,11 @@ export const create = mutation({
       platforms: args.platforms,
       telegramToken: args.telegramToken,
       maxToken: args.maxToken,
+      maxWebhookUrl: args.maxWebhookUrl,
+      maxWebhookSecret: args.maxWebhookSecret,
+      maxWebhookPath: args.maxWebhookPath,
+      webhookPort: args.webhookPort,
+      maxBotUsername: args.maxBotUsername,
       enabled: args.enabled,
       settings: args.settings,
       createdAt: now,
@@ -99,6 +114,11 @@ export const update = mutation({
     platforms: v.optional(v.array(platformValidator)),
     telegramToken: v.optional(v.string()),
     maxToken: v.optional(v.string()),
+    maxWebhookUrl: v.optional(v.string()),
+    maxWebhookSecret: v.optional(v.string()),
+    maxWebhookPath: v.optional(v.string()),
+    webhookPort: v.optional(v.number()),
+    maxBotUsername: v.optional(v.string()),
     enabled: v.optional(v.boolean()),
     settings: v.optional(botSettingsValidator),
   },
@@ -121,6 +141,24 @@ export const update = mutation({
       }
     }
 
+    const platforms = args.platforms ?? bot.platforms;
+    if (platforms.includes("max")) {
+      const maxToken = args.maxToken ?? bot.maxToken;
+      if (!maxToken?.trim()) {
+        throw new Error("MAX включён: укажите токен бота (business.max.ru)");
+      }
+
+      const maxWebhookSecret = args.maxWebhookSecret ?? bot.maxWebhookSecret;
+      if (
+        maxWebhookSecret &&
+        (maxWebhookSecret.length < 5 || maxWebhookSecret.length > 256)
+      ) {
+        throw new Error(
+          "MAX_WEBHOOK_SECRET: от 5 до 256 символов (латиница, цифры, _ и -)",
+        );
+      }
+    }
+
     const updates: Record<string, unknown> = { updatedAt: Date.now() };
     if (args.name !== undefined) updates.name = args.name;
     if (args.slug !== undefined) updates.slug = args.slug;
@@ -128,6 +166,13 @@ export const update = mutation({
     if (args.platforms !== undefined) updates.platforms = args.platforms;
     if (args.telegramToken !== undefined) updates.telegramToken = args.telegramToken;
     if (args.maxToken !== undefined) updates.maxToken = args.maxToken;
+    if (args.maxWebhookUrl !== undefined) updates.maxWebhookUrl = args.maxWebhookUrl;
+    if (args.maxWebhookSecret !== undefined) {
+      updates.maxWebhookSecret = args.maxWebhookSecret;
+    }
+    if (args.maxWebhookPath !== undefined) updates.maxWebhookPath = args.maxWebhookPath;
+    if (args.webhookPort !== undefined) updates.webhookPort = args.webhookPort;
+    if (args.maxBotUsername !== undefined) updates.maxBotUsername = args.maxBotUsername;
     if (args.enabled !== undefined) updates.enabled = args.enabled;
     if (args.settings !== undefined) updates.settings = args.settings;
 

@@ -16,6 +16,7 @@ import type * as bots from "../bots.js";
 import type * as buttons from "../buttons.js";
 import type * as events from "../events.js";
 import type * as lib_auth from "../lib/auth.js";
+import type * as lib_urls from "../lib/urls.js";
 import type * as lib_validators from "../lib/validators.js";
 import type * as sections from "../sections.js";
 import type * as seed from "../seed.js";
@@ -35,6 +36,7 @@ declare const fullApi: ApiFromModules<{
   buttons: typeof buttons;
   events: typeof events;
   "lib/auth": typeof lib_auth;
+  "lib/urls": typeof lib_urls;
   "lib/validators": typeof lib_validators;
   sections: typeof sections;
   seed: typeof seed;

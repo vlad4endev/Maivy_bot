@@ -11,14 +11,61 @@ export interface BootstrapConfig {
   botApiSecret?: string;
 }
 
-export type MaxDeliveryMode = "polling" | "webhook";
+export type DeliveryMode = "polling" | "webhook";
 
-export interface MaxDeliveryConfig {
-  mode: MaxDeliveryMode;
+export type MaxDeliveryMode = DeliveryMode;
+export type TelegramDeliveryMode = DeliveryMode;
+
+export interface WebhookDeliveryConfig {
+  mode: DeliveryMode;
   webhookUrl?: string;
   webhookSecret?: string;
   webhookPort: number;
   webhookPath?: string;
+}
+
+export interface MaxDeliveryConfig extends WebhookDeliveryConfig {
+  mode: MaxDeliveryMode;
+}
+
+export interface TelegramDeliveryConfig extends WebhookDeliveryConfig {
+  mode: TelegramDeliveryMode;
+}
+
+/** Общий порт для webhook Telegram и MAX (один HTTP-сервер, разные пути). */
+export function resolveWebhookPort(): number {
+  return Number(
+    process.env.WEBHOOK_PORT ??
+      process.env.MAX_WEBHOOK_PORT ??
+      process.env.TELEGRAM_WEBHOOK_PORT ??
+      process.env.PORT ??
+      3000,
+  );
+}
+
+function loadWebhookDeliveryConfig(envPrefix: "MAX" | "TELEGRAM"): {
+  mode: DeliveryMode;
+  webhookUrl?: string;
+  webhookSecret?: string;
+  webhookPort: number;
+  webhookPath?: string;
+} {
+  const webhookUrl = process.env[`${envPrefix}_WEBHOOK_URL`]?.trim();
+
+  if (webhookUrl) {
+    return {
+      mode: "webhook",
+      webhookUrl,
+      webhookSecret: process.env[`${envPrefix}_WEBHOOK_SECRET`]?.trim() || undefined,
+      webhookPort: resolveWebhookPort(),
+      webhookPath: process.env[`${envPrefix}_WEBHOOK_PATH`]?.trim() || undefined,
+    };
+  }
+
+  return {
+    mode: "polling",
+    webhookPort: resolveWebhookPort(),
+  };
 }
 
 export interface AppContentConfig {
@@ -77,22 +124,12 @@ export function loadBootstrapConfig(): BootstrapConfig {
 
 /** Режим доставки событий MAX: webhook (production) или polling (локальная разработка). */
 export function loadMaxDeliveryConfig(): MaxDeliveryConfig {
-  const webhookUrl = process.env.MAX_WEBHOOK_URL?.trim();
+  return loadWebhookDeliveryConfig("MAX");
+}
 
-  if (webhookUrl) {
-    return {
-      mode: "webhook",
-      webhookUrl,
-      webhookSecret: process.env.MAX_WEBHOOK_SECRET?.trim() || undefined,
-      webhookPort: Number(process.env.MAX_WEBHOOK_PORT ?? process.env.PORT ?? 3000),
-      webhookPath: process.env.MAX_WEBHOOK_PATH?.trim() || undefined,
-    };
-  }
-
-  return {
-    mode: "polling",
-    webhookPort: Number(process.env.MAX_WEBHOOK_PORT ?? process.env.PORT ?? 3000),
-  };
+/** Режим доставки событий Telegram: webhook (production) или polling (локальная разработка). */
+export function loadTelegramDeliveryConfig(): TelegramDeliveryConfig {
+  return loadWebhookDeliveryConfig("TELEGRAM");
 }
 
 export function normalizeUsername(value: string): string {

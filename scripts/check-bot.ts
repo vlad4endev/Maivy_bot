@@ -1,6 +1,10 @@
 import dotenv from "dotenv";
 import { ConvexHttpClient } from "convex/browser";
-import { loadMaxDeliveryConfig } from "../src/config.js";
+import {
+  loadTelegramDeliveryConfig,
+} from "../src/config.js";
+import { resolvePlatformTokens } from "../src/lib/platform-tokens.js";
+import { resolveMaxDeliveryConfig } from "../src/lib/max-delivery.js";
 
 dotenv.config();
 dotenv.config({ path: ".env.local", override: false });
@@ -51,7 +55,12 @@ async function main(): Promise<void> {
     platforms: Array<"telegram" | "max">;
     telegramToken?: string;
     maxToken?: string;
+    maxWebhookUrl?: string;
+    maxWebhookSecret?: string;
+    maxWebhookPath?: string;
+    webhookPort?: number;
   } | null = null;
+  let tokens = { telegramToken: undefined as string | undefined, maxToken: undefined as string | undefined };
 
   try {
     runtime = await client.query("botApi:getBotContent" as never, {
@@ -68,21 +77,31 @@ async function main(): Promise<void> {
     } else {
       ok(`Бот "${runtime.slug}" найден и включён`);
 
+      tokens = resolvePlatformTokens(runtime);
+      let runnablePlatforms = 0;
+
       for (const platform of runtime.platforms) {
         const token =
-          platform === "telegram" ? runtime.telegramToken : runtime.maxToken;
+          platform === "telegram" ? tokens.telegramToken : tokens.maxToken;
+        const envKey =
+          platform === "telegram" ? "TELEGRAM_BOT_TOKEN" : "MAX_BOT_TOKEN";
+
         if (!token) {
           fail(
-            `${platform.toUpperCase()} включён, но токен не задан (админка → Настройки)`,
+            `${platform.toUpperCase()} включён, но токен не задан (админка → Настройки или ${envKey} в .env)`,
           );
           hasErrors = true;
         } else {
           ok(`${platform.toUpperCase()} токен задан`);
+          runnablePlatforms += 1;
         }
       }
 
       if (runtime.platforms.length === 0) {
         fail("Не выбрана ни одна платформа");
+        hasErrors = true;
+      } else if (runnablePlatforms === 0) {
+        fail("Нет платформ с токенами — сценарий не запустится");
         hasErrors = true;
       }
     }
@@ -104,8 +123,25 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  const maxDelivery = loadMaxDeliveryConfig();
-  if (runtime?.platforms.includes("max")) {
+  const telegramDelivery = loadTelegramDeliveryConfig();
+  if (runtime?.platforms.includes("telegram")) {
+    console.log("");
+    if (telegramDelivery.mode === "webhook") {
+      ok(`Telegram webhook: ${telegramDelivery.webhookUrl}`);
+      if (!telegramDelivery.webhookSecret) {
+        console.log(
+          "  Рекомендуется задать TELEGRAM_WEBHOOK_SECRET (заголовок X-Telegram-Bot-Api-Secret-Token)",
+        );
+      }
+    } else {
+      console.log(
+        "ℹ Telegram: Long Polling (режим разработки). Для production задайте TELEGRAM_WEBHOOK_URL=https://...",
+      );
+    }
+  }
+
+  const maxDelivery = resolveMaxDeliveryConfig(runtime ?? undefined);
+  if (runtime?.platforms.includes("max") && tokens.maxToken) {
     console.log("");
     if (maxDelivery.mode === "webhook") {
       ok(`MAX webhook: ${maxDelivery.webhookUrl}`);
@@ -116,7 +152,7 @@ async function main(): Promise<void> {
       }
     } else {
       console.log(
-        "ℹ MAX: Long Polling (режим разработки). Для production задайте MAX_WEBHOOK_URL=https://...",
+        "ℹ MAX: Long Polling (режим разработки). Для production задайте MAX_WEBHOOK_URL в админке или .env",
       );
     }
   }

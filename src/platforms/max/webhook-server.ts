@@ -1,7 +1,11 @@
-import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
+import { type IncomingMessage } from "node:http";
 import { Bot, Context } from "@maxhub/max-bot-api";
 import type { Update } from "@maxhub/max-bot-api/types";
 import type { MaxDeliveryConfig } from "../../config.js";
+import {
+  ensureWebhookServer,
+  registerWebhookRoute,
+} from "../../webhook/server.js";
 import { resolveMaxWebhookPath } from "./delivery.js";
 
 function readJsonBody(req: IncomingMessage): Promise<unknown> {
@@ -35,29 +39,22 @@ export async function processMaxUpdate(bot: Bot, update: Update): Promise<void> 
   await bot.middleware()(ctx, () => Promise.resolve(undefined));
 }
 
-export function startMaxWebhookServer(
+export function registerMaxWebhook(
   bot: Bot,
   delivery: MaxDeliveryConfig,
 ): void {
   const webhookPath = resolveMaxWebhookPath(delivery);
   const expectedSecret = delivery.webhookSecret;
 
-  const server = createServer((req, res) => {
-    void handleRequest(req, res);
-  });
-
-  async function handleRequest(
-    req: IncomingMessage,
-    res: ServerResponse,
-  ): Promise<void> {
-    if (req.method === "GET" && req.url?.split("?")[0] === webhookPath) {
+  registerWebhookRoute(webhookPath, async (req, res) => {
+    if (req.method === "GET") {
       res.writeHead(200, { "Content-Type": "text/plain; charset=utf-8" });
       res.end("MAX webhook OK");
       return;
     }
 
-    if (req.method !== "POST" || req.url?.split("?")[0] !== webhookPath) {
-      res.writeHead(404).end();
+    if (req.method !== "POST") {
+      res.writeHead(405).end();
       return;
     }
 
@@ -71,25 +68,24 @@ export function startMaxWebhookServer(
       }
     }
 
-    try {
-      const body = await readJsonBody(req);
-      if (!isUpdate(body)) {
-        res.writeHead(400).end();
-        return;
-      }
-
-      await processMaxUpdate(bot, body);
-      res.writeHead(200).end();
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      console.error("MAX webhook: ошибка обработки:", message);
-      res.writeHead(500).end();
+    const body = await readJsonBody(req);
+    if (!isUpdate(body)) {
+      res.writeHead(400).end();
+      return;
     }
-  }
 
-  server.listen(delivery.webhookPort, () => {
-    console.log(
-      `MAX webhook слушает :${delivery.webhookPort}${webhookPath}`,
-    );
+    await processMaxUpdate(bot, body);
+    res.writeHead(200).end();
   });
+
+  ensureWebhookServer(delivery.webhookPort);
+  console.log(`MAX webhook слушает :${delivery.webhookPort}${webhookPath}`);
+}
+
+/** @deprecated Используйте registerMaxWebhook — оставлено для совместимости. */
+export function startMaxWebhookServer(
+  bot: Bot,
+  delivery: MaxDeliveryConfig,
+): void {
+  registerMaxWebhook(bot, delivery);
 }

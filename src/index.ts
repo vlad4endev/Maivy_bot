@@ -2,9 +2,11 @@ import { createBotHandlers } from "./core/handlers.js";
 import {
   getEnvFallbackContent,
   loadBootstrapConfig,
-  loadMaxDeliveryConfig,
+  loadTelegramDeliveryConfig,
 } from "./config.js";
+import { resolveMaxDeliveryConfig } from "./lib/max-delivery.js";
 import { loadBotRuntime } from "./lib/convex-client.js";
+import { buildRuntimeState } from "./lib/platform-tokens.js";
 import { getRuntimeState, setRuntimeState } from "./lib/runtime-state.js";
 import { startMaxBot } from "./platforms/max/bot.js";
 import { startTelegramBot } from "./platforms/telegram/bot.js";
@@ -22,15 +24,24 @@ async function applyRuntime(botSlug: string): Promise<boolean> {
     return false;
   }
 
-  setRuntimeState({
-    botSlug,
-    enabled: runtime.enabled,
-    platforms: runtime.platforms,
-    telegramToken: runtime.telegramToken,
-    maxToken: runtime.maxToken,
-    config: runtime.settings,
-    content: runtime,
-  });
+  setRuntimeState(
+    buildRuntimeState(
+      botSlug,
+      {
+        enabled: runtime.enabled,
+        platforms: runtime.platforms,
+        telegramToken: runtime.telegramToken,
+        maxToken: runtime.maxToken,
+        maxWebhookUrl: runtime.maxWebhookUrl,
+        maxWebhookSecret: runtime.maxWebhookSecret,
+        maxWebhookPath: runtime.maxWebhookPath,
+        webhookPort: runtime.webhookPort,
+        maxBotUsername: runtime.maxBotUsername,
+        settings: runtime.settings,
+      },
+      runtime,
+    ),
+  );
 
   return true;
 }
@@ -60,30 +71,45 @@ async function main(): Promise<void> {
     throw new Error("Не удалось загрузить конфигурацию бота");
   }
 
+  let startedPlatforms = 0;
+
   if (runtime.platforms.includes("telegram")) {
     if (!runtime.telegramToken) {
-      throw new Error(
-        "Telegram включён, но токен не задан. Укажите его в админ-панели → Настройки",
+      console.warn(
+        "Telegram включён, но токен не задан (админка → Настройки или TELEGRAM_BOT_TOKEN в .env)",
       );
+    } else {
+      await startTelegramBot(
+        runtime.telegramToken,
+        handlers,
+        runtime.config,
+        {
+          ...botOptions,
+          delivery: loadTelegramDeliveryConfig(),
+        },
+      );
+      startedPlatforms += 1;
     }
-    startTelegramBot(
-      runtime.telegramToken,
-      handlers,
-      runtime.config,
-      botOptions,
-    );
   }
 
   if (runtime.platforms.includes("max")) {
     if (!runtime.maxToken) {
-      throw new Error(
-        "MAX включён, но токен не задан. Укажите его в админ-панели → Настройки",
+      console.warn(
+        "MAX включён, но токен не задан (админка → Настройки или MAX_BOT_TOKEN в .env)",
       );
+    } else {
+      await startMaxBot(runtime.maxToken, handlers, runtime.config, {
+        ...botOptions,
+        delivery: resolveMaxDeliveryConfig(runtime),
+      });
+      startedPlatforms += 1;
     }
-    await startMaxBot(runtime.maxToken, handlers, runtime.config, {
-      ...botOptions,
-      delivery: loadMaxDeliveryConfig(),
-    });
+  }
+
+  if (startedPlatforms === 0) {
+    throw new Error(
+      "Ни одна платформа не запущена: задайте токены в админке → Настройки или в .env (TELEGRAM_BOT_TOKEN / MAX_BOT_TOKEN)",
+    );
   }
 
   setInterval(() => {

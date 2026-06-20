@@ -230,7 +230,17 @@ npm run build && sudo systemctl restart maivy-bot
 ```env
 MAX_WEBHOOK_URL=https://ваш-домен/max/webhook
 MAX_WEBHOOK_SECRET=случайная_строка_5_символов
-MAX_WEBHOOK_PORT=3000
+WEBHOOK_PORT=3000
 ```
 
-Nginx проксирует HTTPS:443 → `MAX_WEBHOOK_PORT`. Без `MAX_WEBHOOK_URL` бот использует Long Polling и снимает старые webhook-подписки (режим разработки).
+**Telegram в production**
+
+Рекомендуется **Webhook** (Long Polling — для разработки). Telegram и MAX могут слушать **один порт** с разными путями:
+
+```env
+TELEGRAM_WEBHOOK_URL=https://ваш-домен/telegram/webhook
+TELEGRAM_WEBHOOK_SECRET=случайная_строка
+WEBHOOK_PORT=3000
+```
+
+Nginx проксирует HTTPS:443 → `WEBHOOK_PORT`. Без `*_WEBHOOK_URL` платформа использует Long Polling (Telegram снимает webhook через `deleteWebhook`, MAX снимает подписки).

@@ -37,3 +37,12 @@ export const urlSourceValidator = v.optional(
     v.literal("contactUrl"),
   ),
 );
+
+/** Поля доставки событий MAX (см. dev.max.ru/docs-api). */
+export const maxDeliveryValidator = v.object({
+  maxWebhookUrl: v.optional(v.string()),
+  maxWebhookSecret: v.optional(v.string()),
+  maxWebhookPath: v.optional(v.string()),
+  webhookPort: v.optional(v.number()),
+  maxBotUsername: v.optional(v.string()),
+});

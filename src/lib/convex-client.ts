@@ -19,6 +19,11 @@ export interface BotContentSnapshot {
   platforms: Array<"telegram" | "max">;
   telegramToken?: string;
   maxToken?: string;
+  maxWebhookUrl?: string;
+  maxWebhookSecret?: string;
+  maxWebhookPath?: string;
+  webhookPort?: number;
+  maxBotUsername?: string;
   settings: AppContentConfig;
   sections: DynamicSection[];
   keyboards: Record<string, Keyboard>;
@@ -81,6 +86,11 @@ export async function loadBotRuntime(
       platforms: Array<"telegram" | "max">;
       telegramToken?: string;
       maxToken?: string;
+      maxWebhookUrl?: string;
+      maxWebhookSecret?: string;
+      maxWebhookPath?: string;
+      webhookPort?: number;
+      maxBotUsername?: string;
       settings: AppContentConfig;
       sections: DynamicSection[];
       keyboards: Record<string, Keyboard>;
@@ -111,6 +121,11 @@ export async function loadBotRuntime(
       platforms: data.platforms,
       telegramToken: data.telegramToken,
       maxToken: data.maxToken,
+      maxWebhookUrl: data.maxWebhookUrl,
+      maxWebhookSecret: data.maxWebhookSecret,
+      maxWebhookPath: data.maxWebhookPath,
+      webhookPort: data.webhookPort,
+      maxBotUsername: data.maxBotUsername,
       settings,
       sections: data.sections,
       keyboards: data.keyboards,

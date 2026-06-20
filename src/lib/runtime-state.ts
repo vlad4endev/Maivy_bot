@@ -7,6 +7,11 @@ export interface BotRuntimeState {
   platforms: Array<"telegram" | "max">;
   telegramToken?: string;
   maxToken?: string;
+  maxWebhookUrl?: string;
+  maxWebhookSecret?: string;
+  maxWebhookPath?: string;
+  webhookPort?: number;
+  maxBotUsername?: string;
   config: AppContentConfig;
   content: BotContentSnapshot | null;
 }

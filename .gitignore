@@ -9,6 +9,10 @@ admin/.env.local
 .DS_Store
 .convex/
 
+# Случайные .js-копии рядом с .ts ломают convex dev
+convex/**/*.js
+!convex/_generated/**
+
 # TypeScript
 *.tsbuildinfo
 admin/tsconfig.tsbuildinfo
