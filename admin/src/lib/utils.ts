@@ -82,6 +82,14 @@ export function buildMaxContactUrl(username: string): string {
   return `https://max.ru/${clean}`;
 }
 
+export function buildMaxChatUrl(platformUserId: string): string {
+  const clean = platformUserId.trim();
+  if (clean.startsWith("u/")) {
+    return normalizeUrl(`max.ru/${clean}`, "max");
+  }
+  return `https://max.ru/chat/${clean}`;
+}
+
 export function buildContactUrl(username: string): string {
   return buildTelegramContactUrl(username);
 }
@@ -110,7 +118,7 @@ export function getUserChatUrl(user: {
     return normalizeUrl(`max.ru/${user.platformUserId}`, "max");
   }
 
-  return null;
+  return buildMaxChatUrl(user.platformUserId);
 }
 
 export function downloadCsv(filename: string, rows: string[][]): void {

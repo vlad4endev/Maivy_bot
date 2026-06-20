@@ -78,16 +78,6 @@ export function UsersPage() {
     downloadCsv(`users-${activeBotId}-${Date.now()}.csv`, rows);
   };
 
-  const openChat = (user: {
-    platform: "telegram" | "max";
-    platformUserId: string;
-    username?: string;
-  }) => {
-    const chatUrl = getUserChatUrl(user);
-    if (!chatUrl) return;
-    window.open(chatUrl, "_blank", "noopener,noreferrer");
-  };
-
   return (
     <BotProvider selectedBotId={activeBotId} setSelectedBotId={setSelectedBotId}>
       <div className="page">
@@ -230,7 +220,7 @@ export function UsersPage() {
                               <button
                                 type="button"
                                 className="btn btn-sm btn-primary"
-                                onClick={() => openChat(user)}
+                                onClick={() => window.open(chatUrl, "_blank")}
                                 title={
                                   user.platform === "max"
                                     ? "Открыть чат в MAX"
@@ -239,7 +229,7 @@ export function UsersPage() {
                                       : "Открыть чат по ID (нужен Telegram)"
                                 }
                               >
-                                Открыть чат
+                                💬 Открыть чат
                               </button>
                             )}
                             <button
