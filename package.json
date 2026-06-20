@@ -29,7 +29,13 @@
   "engines": {
     "node": ">=20"
   },
-  "keywords": ["telegram", "max", "bot", "admin", "convex"],
+  "keywords": [
+    "telegram",
+    "max",
+    "bot",
+    "admin",
+    "convex"
+  ],
   "author": "",
   "license": "ISC",
   "type": "module",
@@ -37,7 +43,9 @@
     "@maxhub/max-bot-api": "^0.2.2",
     "convex": "^1.21.0",
     "dotenv": "^17.4.2",
-    "grammy": "^1.44.0"
+    "grammy": "^1.44.0",
+    "https-proxy-agent": "^7.0.6",
+    "socks-proxy-agent": "^8.0.5"
   },
   "devDependencies": {
     "@types/node": "^26.0.0",

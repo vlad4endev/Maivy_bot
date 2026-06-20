@@ -1,4 +1,6 @@
 import { Bot } from "grammy";
+import { HttpsProxyAgent } from "https-proxy-agent";
+import { SocksProxyAgent } from "socks-proxy-agent";
 import type { AppContentConfig, TelegramDeliveryConfig } from "../../config.js";
 import type { BotHandlers } from "../../core/handlers.js";
 import {
@@ -10,6 +12,27 @@ import { registerTelegramWebhook } from "./webhook-server.js";
 import { trackEvent, trackStart, type TrackUserInfo } from "../../lib/convex-client.js";
 
 const TELEGRAM_ALLOWED_UPDATES = ["message", "callback_query"] as const;
+
+function createTelegramBot(token: string): Bot {
+  const proxyUrl = process.env.HTTPS_PROXY ?? process.env.TELEGRAM_PROXY_URL;
+
+  if (proxyUrl) {
+    const agent = proxyUrl.startsWith("socks")
+      ? new SocksProxyAgent(proxyUrl)
+      : new HttpsProxyAgent(proxyUrl);
+
+    return new Bot(token, {
+      client: {
+        baseFetchConfig: {
+          agent,
+          compress: true,
+        },
+      },
+    });
+  }
+
+  return new Bot(token);
+}
 
 export interface TelegramBotOptions {
   botSlug: string;
@@ -127,7 +150,7 @@ export async function startTelegramBot(
   config: AppContentConfig,
   options: TelegramBotOptions,
 ): Promise<Bot> {
-  const bot = new Bot(token);
+  const bot = createTelegramBot(token);
   attachTelegramErrorHandler(bot);
   registerTelegramHandlers(bot, handlers, config, options);
 
