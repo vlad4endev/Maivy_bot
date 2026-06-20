@@ -4,6 +4,8 @@ import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { useAuth } from "../lib/auth";
 import { BotProvider, BotSelector } from "../components/BotSelector";
+import { LuActivity, LuBot, LuUsers, LuZap, NAV_ICONS } from "../components/icons";
+import { PageHeader } from "../components/PageHeader";
 import { formatRelative } from "../lib/utils";
 
 export function DashboardPage() {
@@ -35,12 +37,11 @@ export function DashboardPage() {
   return (
     <BotProvider selectedBotId={activeBotId} setSelectedBotId={setSelectedBotId}>
       <div className="page">
-        <div className="page-header">
-          <div>
-            <h2>Дашборд</h2>
-            <p>Обзор ботов, пользователей и активности</p>
-          </div>
-        </div>
+        <PageHeader
+          icon={NAV_ICONS.dashboard}
+          title="Дашборд"
+          description="Обзор ботов, пользователей и активности"
+        />
 
         <BotSelector />
 
@@ -50,24 +51,44 @@ export function DashboardPage() {
           <>
             <div className="stats-grid">
               <div className="stat-card">
-                <div className="label">Боты</div>
+                <div className="stat-card-top">
+                  <div className="label">Боты</div>
+                  <span className="stat-icon" aria-hidden="true">
+                    <LuBot size={18} />
+                  </span>
+                </div>
                 <div className="value">{stats.totalBots}</div>
                 <div className="sub">{stats.enabledBots} активных</div>
               </div>
               <div className="stat-card">
-                <div className="label">Пользователи</div>
+                <div className="stat-card-top">
+                  <div className="label">Пользователи</div>
+                  <span className="stat-icon" aria-hidden="true">
+                    <LuUsers size={18} />
+                  </span>
+                </div>
                 <div className="value">{stats.totalUsers}</div>
                 <div className="sub">
                   TG: {stats.platformBreakdown.telegram} · MAX: {stats.platformBreakdown.max}
                 </div>
               </div>
               <div className="stat-card">
-                <div className="label">События сегодня</div>
+                <div className="stat-card-top">
+                  <div className="label">События сегодня</div>
+                  <span className="stat-icon" aria-hidden="true">
+                    <LuZap size={18} />
+                  </span>
+                </div>
                 <div className="value">{stats.eventsToday}</div>
                 <div className="sub">За неделю: {stats.eventsWeek}</div>
               </div>
               <div className="stat-card">
-                <div className="label">Всего событий</div>
+                <div className="stat-card-top">
+                  <div className="label">Всего событий</div>
+                  <span className="stat-icon" aria-hidden="true">
+                    <LuActivity size={18} />
+                  </span>
+                </div>
                 <div className="value">{stats.totalEvents}</div>
               </div>
             </div>

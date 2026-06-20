@@ -4,6 +4,8 @@ import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { useAuth } from "../lib/auth";
 import { BotProvider, BotSelector } from "../components/BotSelector";
+import { NAV_ICONS } from "../components/icons";
+import { PageHeader } from "../components/PageHeader";
 import { CALLBACK_LABELS } from "../lib/utils";
 
 export function AnalyticsPage() {
@@ -42,12 +44,11 @@ export function AnalyticsPage() {
   return (
     <BotProvider selectedBotId={activeBotId} setSelectedBotId={setSelectedBotId}>
       <div className="page">
-        <div className="page-header">
-          <div>
-            <h2>Аналитика</h2>
-            <p>Воронка, конверсии и популярность кнопок</p>
-          </div>
-        </div>
+        <PageHeader
+          icon={NAV_ICONS.analytics}
+          title="Аналитика"
+          description="Воронка, конверсии и популярность кнопок"
+        />
 
         <BotSelector />
 

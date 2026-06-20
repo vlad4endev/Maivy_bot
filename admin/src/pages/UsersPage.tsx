@@ -4,6 +4,8 @@ import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { useAuth } from "../lib/auth";
 import { BotProvider, BotSelector } from "../components/BotSelector";
+import { LuMessageCircle, LuUsers, NAV_ICONS } from "../components/icons";
+import { PageHeader } from "../components/PageHeader";
 import {
   buildContactUrl,
   buildMaxContactUrl,
@@ -81,20 +83,21 @@ export function UsersPage() {
   return (
     <BotProvider selectedBotId={activeBotId} setSelectedBotId={setSelectedBotId}>
       <div className="page">
-        <div className="page-header">
-          <div>
-            <h2>Пользователи</h2>
-            <p>Все пользователи, нажавшие /start в боте</p>
-          </div>
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={handleExport}
-            disabled={!exportData?.length}
-          >
-            Экспорт CSV
-          </button>
-        </div>
+        <PageHeader
+          icon={NAV_ICONS.users}
+          title="Пользователи"
+          description="Все пользователи, нажавшие /start в боте"
+          actions={
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={handleExport}
+              disabled={!exportData?.length}
+            >
+              Экспорт CSV
+            </button>
+          }
+        />
 
         <BotSelector />
 
@@ -229,7 +232,8 @@ export function UsersPage() {
                                       : "Открыть чат по ID (нужен Telegram)"
                                 }
                               >
-                                💬 Открыть чат
+                                <LuMessageCircle size={14} strokeWidth={2} />
+                                Открыть чат
                               </button>
                             )}
                             <button

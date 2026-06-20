@@ -4,6 +4,8 @@ import { Link } from "react-router-dom";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { useAuth } from "../lib/auth";
+import { NAV_ICONS } from "../components/icons";
+import { PageHeader } from "../components/PageHeader";
 import { formatDate } from "../lib/utils";
 
 interface BotFormData {
@@ -115,20 +117,28 @@ export function BotsPage() {
 
   return (
     <div className="page">
-      <div className="page-header">
-        <div>
-          <h2>Боты</h2>
-          <p>Список ботов. Токены и .env-параметры — в разделе <Link to="/settings" style={{ color: "var(--accent-hover)" }}>Настройки</Link></p>
-        </div>
-        <div className="btn-group">
-          <button type="button" className="btn" onClick={() => void handleSeed()} disabled={seeding}>
-            {seeding ? "Создание..." : "Создать Maivy по умолчанию"}
-          </button>
-          <button type="button" className="btn btn-primary" onClick={openCreate}>
-            + Новый бот
-          </button>
-        </div>
-      </div>
+      <PageHeader
+        icon={NAV_ICONS.bots}
+        title="Боты"
+        description={
+          <>
+            Список ботов. Токены и .env-параметры — в разделе{" "}
+            <Link to="/settings" style={{ color: "var(--accent-hover)" }}>
+              Настройки
+            </Link>
+          </>
+        }
+        actions={
+          <div className="btn-group">
+            <button type="button" className="btn" onClick={() => void handleSeed()} disabled={seeding}>
+              {seeding ? "Создание..." : "Создать Maivy по умолчанию"}
+            </button>
+            <button type="button" className="btn btn-primary" onClick={openCreate}>
+              + Новый бот
+            </button>
+          </div>
+        }
+      />
 
       {!bots ? (
         <div className="loading">Загрузка...</div>

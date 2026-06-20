@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { useAuth } from "../lib/auth";
+import { APP_ICON } from "../components/icons";
 
 export function LoginPage() {
   const { login } = useAuth();
@@ -23,7 +24,12 @@ export function LoginPage() {
   return (
     <div className="login-page">
       <div className="login-card">
-        <h1>Maivy Admin</h1>
+        <div className="login-brand">
+          <span className="brand-icon brand-icon-lg" aria-hidden="true">
+            <APP_ICON size={28} />
+          </span>
+          <h1>Maivy Admin</h1>
+        </div>
         <p>Войдите для управления ботами, контентом и пользователями</p>
         {error && <div className="error-msg">{error}</div>}
         <form onSubmit={(e) => void handleSubmit(e)}>

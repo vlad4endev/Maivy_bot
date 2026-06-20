@@ -4,6 +4,8 @@ import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { useAuth } from "../lib/auth";
 import { BotProvider, BotSelector } from "../components/BotSelector";
+import { NAV_ICONS } from "../components/icons";
+import { PageHeader } from "../components/PageHeader";
 import { SECTION_TYPE_LABELS } from "../lib/utils";
 
 type SectionType = "welcome" | "about_step" | "section" | "system";
@@ -118,15 +120,16 @@ export function SectionsPage() {
   return (
     <BotProvider selectedBotId={activeBotId} setSelectedBotId={setSelectedBotId}>
       <div className="page">
-        <div className="page-header">
-          <div>
-            <h2>Разделы</h2>
-            <p>Тексты разделов бота: приветствие, «О Maivy», демо и др.</p>
-          </div>
-          <button type="button" className="btn btn-primary" onClick={openCreate} disabled={!activeBotId}>
-            + Новый раздел
-          </button>
-        </div>
+        <PageHeader
+          icon={NAV_ICONS.sections}
+          title="Разделы"
+          description='Тексты разделов бота: приветствие, «О Maivy», демо и др.'
+          actions={
+            <button type="button" className="btn btn-primary" onClick={openCreate} disabled={!activeBotId}>
+              + Новый раздел
+            </button>
+          }
+        />
 
         <BotSelector />
 

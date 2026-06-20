@@ -4,6 +4,8 @@ import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { useAuth } from "../lib/auth";
 import { BotProvider, BotSelector } from "../components/BotSelector";
+import { NAV_ICONS } from "../components/icons";
+import { PageHeader } from "../components/PageHeader";
 import { CALLBACK_LABELS, KEYBOARD_LABELS, normalizeUrl } from "../lib/utils";
 
 type ButtonType = "callback" | "url";
@@ -161,15 +163,16 @@ export function ButtonsPage() {
   return (
     <BotProvider selectedBotId={activeBotId} setSelectedBotId={setSelectedBotId}>
       <div className="page">
-        <div className="page-header">
-          <div>
-            <h2>Инлайн-кнопки</h2>
-            <p>Управление клавиатурами и кнопками бота</p>
-          </div>
-          <button type="button" className="btn btn-primary" onClick={() => openCreate()} disabled={!activeBotId}>
-            + Новая кнопка
-          </button>
-        </div>
+        <PageHeader
+          icon={NAV_ICONS.buttons}
+          title="Инлайн-кнопки"
+          description="Управление клавиатурами и кнопками бота"
+          actions={
+            <button type="button" className="btn btn-primary" onClick={() => openCreate()} disabled={!activeBotId}>
+              + Новая кнопка
+            </button>
+          }
+        />
 
         <BotSelector />
 

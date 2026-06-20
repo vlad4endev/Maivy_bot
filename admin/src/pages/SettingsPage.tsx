@@ -4,6 +4,8 @@ import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { useAuth } from "../lib/auth";
 import { BotProvider, BotSelector } from "../components/BotSelector";
+import { NAV_ICONS } from "../components/icons";
+import { PageHeader } from "../components/PageHeader";
 import { buildContactUrl, formatDate, normalizeUrl } from "../lib/utils";
 
 type Tab = "platforms" | "content" | "media";
@@ -215,17 +217,18 @@ export function SettingsPage() {
   return (
     <BotProvider selectedBotId={activeBotId} setSelectedBotId={setSelectedBotId}>
       <div className="page">
-        <div className="page-header">
-          <div>
-            <h2>Настройки</h2>
-            <p>Все параметры бота — вместо .env файла</p>
-          </div>
-          {saved && (
-            <span className="badge badge-success" style={{ fontSize: "0.875rem", padding: "6px 12px" }}>
-              ✓ Сохранено
-            </span>
-          )}
-        </div>
+        <PageHeader
+          icon={NAV_ICONS.settings}
+          title="Настройки"
+          description="Все параметры бота — вместо .env файла"
+          actions={
+            saved ? (
+              <span className="badge badge-success" style={{ fontSize: "0.875rem", padding: "6px 12px" }}>
+                Сохранено
+              </span>
+            ) : null
+          }
+        />
 
         <BotSelector />
 

@@ -68,6 +68,30 @@ textarea {
   border-bottom: 1px solid var(--border);
 }
 
+.sidebar-brand-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(99, 102, 241, 0.15);
+  color: var(--accent-hover);
+  flex-shrink: 0;
+}
+
+.brand-icon-lg {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+}
+
 .sidebar-brand h1 {
   font-size: 1.25rem;
   font-weight: 700;
@@ -114,9 +138,16 @@ textarea {
 }
 
 .nav-icon {
-  font-size: 1.1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 20px;
-  text-align: center;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.nav-link.active .nav-icon {
+  color: var(--accent-hover);
 }
 
 .sidebar-footer {
@@ -142,6 +173,31 @@ textarea {
   margin-bottom: 28px;
   gap: 16px;
   flex-wrap: wrap;
+}
+
+.page-header-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.page-header-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(99, 102, 241, 0.12);
+  color: var(--accent-hover);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.page-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .page-header h2 {
@@ -178,6 +234,30 @@ textarea {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 20px;
+  transition: border-color 0.15s, transform 0.15s;
+}
+
+.stat-card:hover {
+  border-color: rgba(99, 102, 241, 0.35);
+}
+
+.stat-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.stat-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(99, 102, 241, 0.12);
+  color: var(--accent-hover);
 }
 
 .stat-card .label {
@@ -185,7 +265,7 @@ textarea {
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin-bottom: 8px;
+  margin-bottom: 0;
 }
 
 .stat-card .value {
@@ -227,6 +307,11 @@ textarea {
 .btn-primary:hover {
   background: var(--accent-hover);
   border-color: var(--accent-hover);
+}
+
+.btn-logout:hover {
+  border-color: rgba(239, 68, 68, 0.4);
+  color: var(--danger);
 }
 
 .btn-danger {
