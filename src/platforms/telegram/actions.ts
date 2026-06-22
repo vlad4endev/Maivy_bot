@@ -130,10 +130,24 @@ export async function executeTelegramCallbackActions(
   for (const action of otherActions) {
     if (action.type === "edit_text" && ctx.callbackQuery?.message) {
       const messageId = ctx.callbackQuery.message.message_id;
-      await ctx.api.editMessageText(chatId, messageId, action.text, {
-        parse_mode: action.parseMode,
-        reply_markup: buildTelegramKeyboard(action.keyboard),
-      });
+      try {
+        await ctx.api.editMessageText(chatId, messageId, action.text, {
+          parse_mode: action.parseMode,
+          reply_markup: buildTelegramKeyboard(action.keyboard),
+        });
+      } catch {
+        await executeTelegramAction(
+          ctx.api,
+          chatId,
+          {
+            type: "send_text",
+            text: action.text,
+            parseMode: action.parseMode,
+            keyboard: action.keyboard,
+          },
+          config,
+        );
+      }
       continue;
     }
 

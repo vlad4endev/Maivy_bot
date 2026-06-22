@@ -202,13 +202,26 @@ async function executeMaxCallbackActions(
 
   for (const action of otherActions) {
     if (action.type === "edit_text" && ctx.messageId) {
-      await ctx.editMessage({
-        text: action.text,
-        format: action.parseMode === "HTML" ? "html" : "markdown",
-        attachments: buildMaxKeyboard(action.keyboard)
-          ? [buildMaxKeyboard(action.keyboard)!]
-          : null,
-      });
+      try {
+        await ctx.editMessage({
+          text: action.text,
+          format: action.parseMode === "HTML" ? "html" : "markdown",
+          attachments: buildMaxKeyboard(action.keyboard)
+            ? [buildMaxKeyboard(action.keyboard)!]
+            : null,
+        });
+      } catch {
+        await executeMaxAction(
+          ctx,
+          {
+            type: "send_text",
+            text: action.text,
+            parseMode: action.parseMode,
+            keyboard: action.keyboard,
+          },
+          config,
+        );
+      }
       continue;
     }
 

@@ -9,6 +9,7 @@ import {
 } from "./actions.js";
 import { setupTelegramProfile } from "./setup.js";
 import { registerTelegramWebhook } from "./webhook-server.js";
+import { resolveEditableCallbackMessageId } from "../../lib/callback-message.js";
 import { trackEvent, trackStart, type TrackUserInfo } from "../../lib/convex-client.js";
 
 const TELEGRAM_ALLOWED_UPDATES = ["message", "callback_query"] as const;
@@ -128,7 +129,7 @@ function registerTelegramHandlers(
         ctx,
         handlers.handleCallback(
           payload,
-          String(ctx.callbackQuery.message?.message_id),
+          resolveEditableCallbackMessageId(ctx.callbackQuery.message),
         ),
         config,
       );

@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { verifyBotApiSecret } from "./lib/auth";
 import { resolveMediaRef } from "./lib/mediaPaths";
+import { actionForTargetSection } from "./lib/sectionKeyboard";
 import { normalizeUrl } from "./lib/urls";
 import { platformValidator, sectionMediaTypeValidator } from "./lib/validators";
 
@@ -142,17 +143,34 @@ export const getBotContent = query({
         [];
 
       for (let row = 0; row <= maxRow; row++) {
-        const rowButtons = kbButtons
-          .filter((b) => b.row === row)
-          .sort((a, b) => a.col - b.col)
-          .map((b) => ({
-            text: b.text,
-            ...(b.buttonType === "callback"
-              ? { action: b.action }
-              : {
-                  url: resolveUrl(b.urlSource, b.url, bot.settings),
-                }),
-          }));
+        const rowButtons = (
+          await Promise.all(
+            kbButtons
+              .filter((b) => b.row === row)
+              .sort((a, b) => a.col - b.col)
+              .map(async (b) => {
+                if (b.buttonType !== "callback") {
+                  return {
+                    text: b.text,
+                    url: resolveUrl(b.urlSource, b.url, bot.settings),
+                  };
+                }
+
+                let action = b.action;
+                if (!action && b.targetSectionId) {
+                  const target = await ctx.db.get(b.targetSectionId);
+                  if (target) {
+                    action = actionForTargetSection(target.slug);
+                  }
+                }
+
+                return {
+                  text: b.text,
+                  action,
+                };
+              }),
+          )
+        ).filter((button) => Boolean(button.url || button.action));
         if (rowButtons.length > 0) {
           rows.push(rowButtons);
         }
