@@ -43,6 +43,14 @@ export function Layout() {
           {sidebarOpen ? <FiX size={22} /> : <FiMenu size={22} />}
         </button>
         <span className="mobile-header-title">Maivy Admin</span>
+        <button
+          type="button"
+          className="mobile-logout-btn"
+          onClick={() => void logout()}
+          aria-label="Выйти"
+        >
+          <FiLogOut size={20} />
+        </button>
       </header>
 
       {sidebarOpen ? (
@@ -102,6 +110,27 @@ export function Layout() {
       <main className="main">
         <Outlet />
       </main>
+
+      <nav className="mobile-bottom-nav" aria-label="Навигация">
+        {NAV_ITEMS.map((item) => {
+          const Icon = item.icon;
+          return (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={"end" in item ? item.end : undefined}
+              className={({ isActive }) =>
+                `mobile-nav-item${isActive ? " active" : ""}`
+              }
+            >
+              <span className="mobile-nav-icon" aria-hidden="true">
+                <Icon size={20} />
+              </span>
+              <span className="mobile-nav-label">{item.label}</span>
+            </NavLink>
+          );
+        })}
+      </nav>
     </div>
   );
 }

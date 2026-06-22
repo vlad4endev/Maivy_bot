@@ -674,6 +674,73 @@ tr:hover td {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  flex: 1;
+  min-width: 0;
+}
+
+.mobile-logout-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.mobile-logout-btn:hover {
+  color: var(--danger);
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+.mobile-bottom-nav {
+  display: none;
+}
+
+.mobile-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-width: 76px;
+  max-width: 96px;
+  padding: 8px 6px;
+  color: var(--text-muted);
+  font-size: 0.625rem;
+  font-weight: 500;
+  text-align: center;
+  line-height: 1.2;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-nav-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-nav-label {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mobile-nav-item.active {
+  color: var(--accent-hover);
+}
+
+.mobile-nav-item.active .mobile-nav-icon {
+  color: var(--accent-hover);
 }
 
 .filters-bar {
@@ -743,15 +810,36 @@ tr:hover td {
     transition: transform 0.25s ease;
     padding-bottom: env(safe-area-inset-bottom, 0px);
     box-shadow: var(--shadow);
+    z-index: 120;
   }
 
   .layout.sidebar-open .sidebar {
     transform: translateX(0);
   }
 
+  .mobile-bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background: var(--bg-elevated);
+    border-top: 1px solid var(--border);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .mobile-bottom-nav::-webkit-scrollbar {
+    display: none;
+  }
+
   .main {
     margin-left: 0;
     padding-top: calc(var(--mobile-header-height) + env(safe-area-inset-top, 0px));
+    padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px));
   }
 
   .page {
