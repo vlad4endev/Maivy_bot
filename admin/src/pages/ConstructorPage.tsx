@@ -7,6 +7,7 @@ import { BotProvider, BotSelector } from "../components/BotSelector";
 import { NAV_ICONS } from "../components/icons";
 import { PageHeader } from "../components/PageHeader";
 import {
+  buttonNeedsTargetLink,
   normalizeUrl,
   resolveTargetLabel,
   SECTION_TYPE_LABELS,
@@ -124,6 +125,12 @@ export function ConstructorPage() {
   const [showButtonModal, setShowButtonModal] = useState(false);
 
   const [error, setError] = useState("");
+  const [linkMessage, setLinkMessage] = useState("");
+
+  const menuSectionId = useMemo(
+    () => flow?.sections.find((section) => section.slug === "menu")?._id ?? null,
+    [flow?.sections],
+  );
 
   const selectedSection = flow?.sections.find((s) => s._id === selectedSectionId);
 
@@ -303,15 +310,25 @@ export function ConstructorPage() {
   const needsLinking = useMemo(() => {
     if (!flow) return false;
     return flow.sections.some((section) =>
-      section.buttons.some(
-        (button) =>
-          button.buttonType === "callback" &&
-          !button.targetSectionId &&
-          button.action &&
-          !["about_next"].includes(button.action),
-      ),
+      section.buttons.some((button) => buttonNeedsTargetLink(button)),
     );
   }, [flow]);
+
+  const linkAllButtonTargets = async () => {
+    if (!token || !activeBotId) return;
+    setLinkMessage("");
+    setError("");
+    try {
+      const updated = await linkButtonTargets({ token, botId: activeBotId });
+      setLinkMessage(
+        updated > 0
+          ? `Связано переходов: ${updated}. Изменения появятся в боте в течение минуты.`
+          : "Все переходы уже связаны с экранами.",
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Не удалось связать переходы");
+    }
+  };
 
   const keyboardPreview = useMemo(() => {
     if (!selectedSection) return [];
@@ -350,22 +367,55 @@ export function ConstructorPage() {
 
         <BotSelector />
 
+        <div className="card constructor-help" style={{ marginBottom: 16, padding: "12px 16px" }}>
+          <h4 style={{ marginBottom: 8 }}>Как работает сценарий</h4>
+          <ol style={{ margin: 0, paddingLeft: 20, fontSize: "0.875rem", color: "var(--text-muted)" }}>
+            <li>
+              <strong>Старт</strong> — экран «Приветствие» (текст и видео после /start).
+            </li>
+            <li>
+              <strong>Главное меню</strong> — 4 кнопки под приветствием; редактируются на экране «Главное меню» или «Приветствие».
+            </li>
+            <li>
+              Для каждой кнопки в блоке «Кнопки и переходы» выберите <strong>куда ведёт нажатие</strong> → целевой экран.
+            </li>
+            <li>
+              Нажмите <strong>Опубликовать</strong>, чтобы экран был виден в боте.
+            </li>
+          </ol>
+          {menuSectionId && (
+            <button
+              type="button"
+              className="btn btn-sm"
+              style={{ marginTop: 12 }}
+              onClick={() => setSelectedSectionId(menuSectionId)}
+            >
+              Перейти к главному меню
+            </button>
+          )}
+        </div>
+
         {needsLinking && (
-          <div className="card" style={{ marginBottom: 16, padding: "12px 16px" }}>
+          <div className="card constructor-link-banner-wrap" style={{ marginBottom: 16, padding: "12px 16px" }}>
             <div className="constructor-link-banner">
               <p style={{ fontSize: "0.875rem", color: "var(--text-muted)" }}>
-                У части кнопок не указан целевой экран. Обновите связи для отображения переходов в конструкторе.
+                У части кнопок переходы ещё не привязаны к экранам — в боте они могут не работать или вести не туда.
+                Нажмите «Связать переходы», затем при необходимости отредактируйте кнопки вручную.
               </p>
               <button
                 type="button"
                 className="btn btn-sm btn-primary"
-                onClick={() =>
-                  void linkButtonTargets({ token: token!, botId: activeBotId! })
-                }
+                onClick={() => void linkAllButtonTargets()}
               >
                 Связать переходы
               </button>
             </div>
+          </div>
+        )}
+
+        {linkMessage && (
+          <div className="card" style={{ marginBottom: 16, padding: "12px 16px", color: "var(--success)" }}>
+            {linkMessage}
           </div>
         )}
 
@@ -435,6 +485,11 @@ export function ConstructorPage() {
                       <h3>{selectedSection.title ?? selectedSection.slug}</h3>
                       <p>
                         Клавиатура: <code>{selectedSection.resolvedKeyboardId}</code>
+                        {selectedSection.resolvedKeyboardId === "main_menu" && (
+                          <span style={{ display: "block", marginTop: 4, fontSize: "0.8125rem", color: "var(--text-muted)" }}>
+                            Эти кнопки показываются после /start под приветственным сообщением.
+                          </span>
+                        )}
                       </p>
                     </div>
                     <div className="btn-group">
@@ -584,10 +639,17 @@ export function ConstructorPage() {
                       </p>
                     ) : (
                       <div className="constructor-button-list">
-                        {selectedSection.buttons.map((button) => (
+                        {selectedSection.buttons.map((button) => {
+                          const targetLabel = resolveTargetLabel(button, sectionOptions);
+                          const missingTarget =
+                            button.buttonType === "callback" &&
+                            !button.action &&
+                            !button.targetSectionSlug &&
+                            !button.targetSectionId;
+                          return (
                           <div
                             key={button._id}
-                            className={`constructor-button-item${button.isEnabled ? "" : " disabled"}`}
+                            className={`constructor-button-item${button.isEnabled ? "" : " disabled"}${missingTarget ? " constructor-button-item-warning" : ""}`}
                           >
                             <div className="constructor-button-main">
                               <span className="constructor-button-label">{button.text}</span>
@@ -601,7 +663,12 @@ export function ConstructorPage() {
                               ) : (
                                 <>
                                   <span className="flow-arrow">→</span>
-                                  <span>{resolveTargetLabel(button, sectionOptions)}</span>
+                                  <span className={missingTarget ? "constructor-target-missing" : undefined}>
+                                    {targetLabel}
+                                  </span>
+                                  {missingTarget && (
+                                    <span className="badge badge-warning">Задайте переход</span>
+                                  )}
                                 </>
                               )}
                             </div>
@@ -634,7 +701,8 @@ export function ConstructorPage() {
                               </button>
                             </div>
                           </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     )}
                   </div>

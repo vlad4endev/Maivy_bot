@@ -177,6 +177,15 @@ export function createBotHandlers() {
     }
   }
 
+  function parseAboutStepFromSlug(slug: string): number | undefined {
+    const match = /^about_(\d+)$/.exec(slug);
+    if (!match) {
+      return undefined;
+    }
+    const step = Number(match[1]);
+    return Number.isFinite(step) ? step : undefined;
+  }
+
   function navigateToSection(slug: string, messageId?: string): BotAction[] {
     const content = getEffectiveContent();
     const section = getSectionBySlug(content, slug);
@@ -193,16 +202,21 @@ export function createBotHandlers() {
 
     const keyboardId = resolveSectionKeyboardId(section);
     const aboutSteps = content ? getAboutSteps(content) : null;
+    const totalAboutSteps = aboutSteps?.length ?? getAboutStepCount();
+    const aboutStep =
+      section.sectionType === "about_step"
+        ? parseAboutStepFromSlug(section.slug) ?? 1
+        : undefined;
     const keyboard = resolveKeyboard(
       content,
       keyboardId,
       keyboardId === "about_step"
-        ? () => aboutStepKeyboard(1, aboutSteps?.length ?? getAboutStepCount())
+        ? () => aboutStepKeyboard(aboutStep ?? 1, totalAboutSteps)
         : keyboardId === "main_menu"
           ? mainMenuKeyboard
           : backToMenuKeyboard,
       keyboardId === "about_step"
-        ? { aboutStep: 1, totalAboutSteps: aboutSteps?.length ?? getAboutStepCount() }
+        ? { aboutStep: aboutStep ?? 1, totalAboutSteps }
         : undefined,
     );
 

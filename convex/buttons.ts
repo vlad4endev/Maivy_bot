@@ -164,7 +164,9 @@ export const update = mutation({
     const nextTargetSectionId =
       args.targetSectionId !== undefined
         ? args.targetSectionId
-        : button.targetSectionId;
+        : args.action !== undefined
+          ? undefined
+          : button.targetSectionId;
     const nextActionInput =
       args.action !== undefined ? args.action : button.action;
 
@@ -190,6 +192,8 @@ export const update = mutation({
     }
     if (args.targetSectionId !== undefined) {
       updates.targetSectionId = args.targetSectionId;
+    } else if (args.action !== undefined) {
+      updates.targetSectionId = undefined;
     }
     if (args.url !== undefined) {
       updates.url = args.url ? normalizeUrl(args.url) : undefined;

@@ -1497,6 +1497,28 @@ tr:hover td {
   opacity: 0.5;
 }
 
+.constructor-button-item-warning {
+  border-color: var(--warning, #d97706);
+  background: color-mix(in srgb, var(--warning, #d97706) 8%, var(--bg));
+}
+
+.constructor-target-missing {
+  color: var(--warning, #d97706);
+  font-weight: 600;
+}
+
+.constructor-help h4 {
+  font-size: 0.9375rem;
+}
+
+.constructor-link-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 @media (max-width: 900px) {
   .constructor-button-item {
     grid-template-columns: 1fr;

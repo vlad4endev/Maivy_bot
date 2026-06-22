@@ -167,6 +167,15 @@ export const SPECIAL_ACTIONS = [
   { value: "menu", label: CALLBACK_LABELS.menu },
 ] as const;
 
+/** Legacy callback actions mapped to default section slugs from seed data. */
+export const LEGACY_ACTION_SECTION_SLUGS: Record<string, string> = {
+  about_more: "about_1",
+  demo: "demo",
+  try: "try",
+  impl: "impl",
+  menu: "menu",
+};
+
 export function resolveTargetLabel(
   button: {
     buttonType: string;
@@ -190,7 +199,38 @@ export function resolveTargetLabel(
     return match?.label ?? slug;
   }
   if (button.action) {
+    const legacySlug = LEGACY_ACTION_SECTION_SLUGS[button.action];
+    if (legacySlug) {
+      const match = sections.find((s) => s.slug === legacySlug);
+      if (match) {
+        return match.label;
+      }
+    }
+    if (button.action === "about_next") {
+      return "Следующий шаг «О Maivy»";
+    }
     return CALLBACK_LABELS[button.action] ?? button.action;
   }
-  return "—";
+  return "— не задан —";
+}
+
+export function buttonNeedsTargetLink(button: {
+  buttonType: string;
+  action?: string;
+  targetSectionId?: string;
+  targetSectionSlug?: string;
+}): boolean {
+  if (button.buttonType !== "callback") {
+    return false;
+  }
+  if (button.targetSectionSlug || button.targetSectionId) {
+    return false;
+  }
+  if (button.action?.startsWith("section:")) {
+    return false;
+  }
+  if (!button.action || button.action === "about_next") {
+    return false;
+  }
+  return Boolean(LEGACY_ACTION_SECTION_SLUGS[button.action]);
 }

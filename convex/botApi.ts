@@ -43,6 +43,7 @@ const botContentValidator = v.object({
       body: v.string(),
       order: v.number(),
       sectionType: v.string(),
+      keyboardId: v.optional(v.string()),
       parseMode: v.string(),
     }),
   ),
