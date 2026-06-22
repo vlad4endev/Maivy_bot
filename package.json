@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "tsx src/index.ts",
     "doctor": "tsx scripts/check-bot.ts",
+    "doctor:docker": "bash scripts/docker-doctor.sh",
     "dev:admin": "npm run dev --prefix admin",
     "dev:convex": "npx convex dev",
     "build": "tsc",

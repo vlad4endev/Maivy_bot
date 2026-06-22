@@ -1,5 +1,5 @@
 import type { MaxDeliveryConfig } from "../config.js";
-import { resolveWebhookPort } from "../config.js";
+import { resolveSharedWebhookPort } from "../config.js";
 
 export interface MaxDeliverySource {
   maxWebhookUrl?: string;
@@ -15,9 +15,7 @@ export function resolveMaxDeliveryConfig(
   const webhookUrl =
     source?.maxWebhookUrl?.trim() || process.env.MAX_WEBHOOK_URL?.trim();
 
-  const webhookPort =
-    source?.webhookPort ??
-    resolveWebhookPort();
+  const webhookPort = resolveSharedWebhookPort(source?.webhookPort);
 
   if (webhookUrl) {
     return {

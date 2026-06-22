@@ -101,12 +101,18 @@ services:
     container_name: maivy-bot
     restart: unless-stopped
     depends_on:
+      convex-backend:
+        condition: service_healthy
       convex-deploy:
         condition: service_completed_successfully
+    env_file:
+      - .env
     environment:
       CONVEX_URL: http://convex-backend:3210
       BOT_API_SECRET: ${BOT_API_SECRET}
       BOT_SLUG: ${BOT_SLUG:-maivy}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      MAX_BOT_TOKEN: ${MAX_BOT_TOKEN:-}
       MAX_WEBHOOK_URL: ${MAX_WEBHOOK_URL:-}
       MAX_WEBHOOK_SECRET: ${MAX_WEBHOOK_SECRET:-}
       TELEGRAM_WEBHOOK_URL: ${TELEGRAM_WEBHOOK_URL:-}

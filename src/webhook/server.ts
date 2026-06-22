@@ -12,6 +12,7 @@ export type WebhookRouteHandler = (
 
 let server: Server | null = null;
 let listeningPort: number | null = null;
+let serverReady: Promise<void> | null = null;
 const routes = new Map<string, WebhookRouteHandler>();
 
 function normalizePath(path: string): string {
@@ -29,25 +30,30 @@ export function registerWebhookRoute(
   routes.set(normalizePath(path), handler);
 }
 
-export function ensureWebhookServer(port: number): void {
+export function ensureWebhookServer(port: number): Promise<void> {
   if (server) {
     if (listeningPort !== port) {
-      throw new Error(
-        `Webhook-сервер уже слушает порт ${listeningPort}, нельзя переключить на ${port}`,
+      console.warn(
+        `Webhook: сервер уже слушает :${listeningPort}, маршрут добавлен (запрошен :${port})`,
       );
     }
-    return;
+    return serverReady ?? Promise.resolve();
   }
 
-  server = createServer((req, res) => {
-    void handleRequest(req, res);
+  serverReady = new Promise((resolve) => {
+    server = createServer((req, res) => {
+      void handleRequest(req, res);
+    });
+
+    server.listen(port, () => {
+      console.log(`Webhook-сервер слушает :${port}`);
+      resolve();
+    });
+
+    listeningPort = port;
   });
 
-  server.listen(port, () => {
-    console.log(`Webhook-сервер слушает :${port}`);
-  });
-
-  listeningPort = port;
+  return serverReady;
 }
 
 async function handleRequest(

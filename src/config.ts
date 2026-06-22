@@ -43,6 +43,14 @@ export function resolveWebhookPort(): number {
   );
 }
 
+/** Порт webhook: приоритет админки, иначе .env. */
+export function resolveSharedWebhookPort(adminPort?: number): number {
+  if (adminPort !== undefined && adminPort > 0) {
+    return adminPort;
+  }
+  return resolveWebhookPort();
+}
+
 function loadWebhookDeliveryConfig(envPrefix: "MAX" | "TELEGRAM"): {
   mode: DeliveryMode;
   webhookUrl?: string;
@@ -128,8 +136,14 @@ export function loadMaxDeliveryConfig(): MaxDeliveryConfig {
 }
 
 /** Режим доставки событий Telegram: webhook (production) или polling (локальная разработка). */
-export function loadTelegramDeliveryConfig(): TelegramDeliveryConfig {
-  return loadWebhookDeliveryConfig("TELEGRAM");
+export function loadTelegramDeliveryConfig(
+  adminWebhookPort?: number,
+): TelegramDeliveryConfig {
+  const config = loadWebhookDeliveryConfig("TELEGRAM");
+  return {
+    ...config,
+    webhookPort: resolveSharedWebhookPort(adminWebhookPort),
+  };
 }
 
 export function normalizeUsername(value: string): string {

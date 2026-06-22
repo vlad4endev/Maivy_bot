@@ -142,8 +142,17 @@ export const update = mutation({
     }
 
     const platforms = args.platforms ?? bot.platforms;
+
+    if (platforms.includes("telegram")) {
+      const nextTelegramToken =
+        args.telegramToken !== undefined ? args.telegramToken : bot.telegramToken;
+      if (!nextTelegramToken?.trim()) {
+        throw new Error("Telegram включён: укажите токен бота (@BotFather)");
+      }
+    }
+
     if (platforms.includes("max")) {
-      const maxToken = args.maxToken ?? bot.maxToken;
+      const maxToken = args.maxToken !== undefined ? args.maxToken : bot.maxToken;
       if (!maxToken?.trim()) {
         throw new Error("MAX включён: укажите токен бота (business.max.ru)");
       }
@@ -164,11 +173,15 @@ export const update = mutation({
     if (args.slug !== undefined) updates.slug = args.slug;
     if (args.description !== undefined) updates.description = args.description;
     if (args.platforms !== undefined) updates.platforms = args.platforms;
-    if (args.telegramToken !== undefined) updates.telegramToken = args.telegramToken;
-    if (args.maxToken !== undefined) updates.maxToken = args.maxToken;
+    if (args.telegramToken !== undefined && args.telegramToken.trim()) {
+      updates.telegramToken = args.telegramToken.trim();
+    }
+    if (args.maxToken !== undefined && args.maxToken.trim()) {
+      updates.maxToken = args.maxToken.trim();
+    }
     if (args.maxWebhookUrl !== undefined) updates.maxWebhookUrl = args.maxWebhookUrl;
-    if (args.maxWebhookSecret !== undefined) {
-      updates.maxWebhookSecret = args.maxWebhookSecret;
+    if (args.maxWebhookSecret !== undefined && args.maxWebhookSecret.trim()) {
+      updates.maxWebhookSecret = args.maxWebhookSecret.trim();
     }
     if (args.maxWebhookPath !== undefined) updates.maxWebhookPath = args.maxWebhookPath;
     if (args.webhookPort !== undefined) updates.webhookPort = args.webhookPort;

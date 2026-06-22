@@ -22,6 +22,7 @@ RUN npm ci --omit=dev && npm cache clean --force
 
 COPY --from=builder /app/dist ./dist
 COPY assets ./assets
+COPY scripts/check-tokens.mjs ./scripts/check-tokens.mjs
 
 RUN addgroup -S maivy && adduser -S maivy -G maivy \
   && chown -R maivy:maivy /app

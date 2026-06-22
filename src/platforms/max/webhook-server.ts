@@ -39,10 +39,10 @@ export async function processMaxUpdate(bot: Bot, update: Update): Promise<void> 
   await bot.middleware()(ctx, () => Promise.resolve(undefined));
 }
 
-export function registerMaxWebhook(
+export async function registerMaxWebhook(
   bot: Bot,
   delivery: MaxDeliveryConfig,
-): void {
+): Promise<void> {
   const webhookPath = resolveMaxWebhookPath(delivery);
   const expectedSecret = delivery.webhookSecret;
 
@@ -78,14 +78,14 @@ export function registerMaxWebhook(
     res.writeHead(200).end();
   });
 
-  ensureWebhookServer(delivery.webhookPort);
+  await ensureWebhookServer(delivery.webhookPort);
   console.log(`MAX webhook слушает :${delivery.webhookPort}${webhookPath}`);
 }
 
 /** @deprecated Используйте registerMaxWebhook — оставлено для совместимости. */
-export function startMaxWebhookServer(
+export async function startMaxWebhookServer(
   bot: Bot,
   delivery: MaxDeliveryConfig,
-): void {
-  registerMaxWebhook(bot, delivery);
+): Promise<void> {
+  await registerMaxWebhook(bot, delivery);
 }

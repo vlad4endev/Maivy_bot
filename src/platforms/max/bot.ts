@@ -12,7 +12,7 @@ import { trackEvent, trackStart, type TrackUserInfo } from "../../lib/convex-cli
 import { MAX_UPDATE_TYPES } from "./constants.js";
 import {
   clearMaxWebhookSubscriptions,
-  createMaxWebhookSubscription,
+  ensureMaxWebhookSubscription,
 } from "./subscriptions.js";
 import { registerMaxWebhook } from "./webhook-server.js";
 
@@ -161,14 +161,12 @@ export async function startMaxBot(
       );
     }
 
-    await clearMaxWebhookSubscriptions(token);
-    await createMaxWebhookSubscription(
+    await registerMaxWebhook(bot, options.delivery);
+    await ensureMaxWebhookSubscription(
       token,
       options.delivery.webhookUrl,
       options.delivery.webhookSecret,
     );
-    console.log(`MAX webhook зарегистрирован: ${options.delivery.webhookUrl}`);
-    registerMaxWebhook(bot, options.delivery);
     return bot;
   }
 

@@ -164,12 +164,13 @@ export async function startTelegramBot(
       );
     }
 
+    await registerTelegramWebhook(bot, options.delivery);
+
     await bot.api.setWebhook(options.delivery.webhookUrl, {
       secret_token: options.delivery.webhookSecret,
       allowed_updates: [...TELEGRAM_ALLOWED_UPDATES],
     });
 
-    registerTelegramWebhook(bot, options.delivery);
     console.log(`Telegram webhook зарегистрирован: ${options.delivery.webhookUrl}`);
     return bot;
   }

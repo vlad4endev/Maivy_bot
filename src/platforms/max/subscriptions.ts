@@ -108,3 +108,32 @@ export async function clearMaxWebhookSubscriptions(token: string): Promise<void>
     console.log(`MAX: удалена webhook-подписка ${subscription.url}`);
   }
 }
+
+/**
+ * Регистрирует webhook без «окна тишины»: сначала создаёт целевую подписку,
+ * затем удаляет устаревшие. При деплое бот не теряет события.
+ */
+export async function ensureMaxWebhookSubscription(
+  token: string,
+  webhookUrl: string,
+  secret?: string,
+): Promise<void> {
+  const subscriptions = await listMaxSubscriptions(token);
+  const alreadyActive = subscriptions.some(
+    (subscription) => subscription.url === webhookUrl,
+  );
+
+  if (!alreadyActive) {
+    await createMaxWebhookSubscription(token, webhookUrl, secret);
+    console.log(`MAX webhook зарегистрирован: ${webhookUrl}`);
+  } else {
+    console.log(`MAX webhook уже активен: ${webhookUrl}`);
+  }
+
+  for (const subscription of subscriptions) {
+    if (subscription.url !== webhookUrl) {
+      await deleteMaxSubscription(token, subscription.url);
+      console.log(`MAX: удалена устаревшая подписка ${subscription.url}`);
+    }
+  }
+}

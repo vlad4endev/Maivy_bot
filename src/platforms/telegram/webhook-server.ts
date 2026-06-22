@@ -6,10 +6,10 @@ import {
 } from "../../webhook/server.js";
 import { resolveTelegramWebhookPath } from "./delivery.js";
 
-export function registerTelegramWebhook(
+export async function registerTelegramWebhook(
   bot: Bot,
   delivery: TelegramDeliveryConfig,
-): void {
+): Promise<void> {
   const webhookPath = resolveTelegramWebhookPath(delivery);
   const callback = webhookCallback(bot, "http", {
     secretToken: delivery.webhookSecret,
@@ -30,7 +30,7 @@ export function registerTelegramWebhook(
     await callback(req, res);
   });
 
-  ensureWebhookServer(delivery.webhookPort);
+  await ensureWebhookServer(delivery.webhookPort);
   console.log(
     `Telegram webhook слушает :${delivery.webhookPort}${webhookPath}`,
   );
