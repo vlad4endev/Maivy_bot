@@ -1,9 +1,6 @@
 import type { BotAction } from "./actions.js";
 import { Callback, parseAboutNext, parseAboutStep, parseSectionGoto } from "./callbacks.js";
 import {
-  buildDemoText,
-  buildImplementText,
-  buildTryText,
   buildWelcomeText,
   getAboutStepCount,
   getAboutStepText,
@@ -13,7 +10,6 @@ import {
   getAboutSteps,
   getMenuText,
   getSectionBySlug,
-  getSectionText,
   getWelcomeText,
   resolveKeyboard,
   resolveSectionKeyboardId,
@@ -27,56 +23,77 @@ import {
   tryKeyboard,
 } from "./keyboards.js";
 import {
+  buildSectionDisplayActions,
+  formatSectionBody,
+  sectionHasMedia,
+  type SectionMediaType,
+} from "./section-display.js";
+import type { DynamicSection } from "../lib/convex-client.js";
+import {
   getEffectiveConfig,
   getEffectiveContent,
 } from "../lib/runtime-state.js";
 
 export function createBotHandlers() {
-  function handleStart(firstName?: string): BotAction[] {
+  function resolveWelcomeMedia(content: ReturnType<typeof getEffectiveContent>): {
+    mediaType: SectionMediaType;
+    mediaPath?: string;
+  } {
     const config = getEffectiveConfig();
-    const content = getEffectiveContent();
+    const welcomeSection = getSectionBySlug(content, "welcome");
 
-    const welcomeText =
-      getWelcomeText(content, firstName) ?? buildWelcomeText(firstName);
-
-    const actions: BotAction[] = [
-      {
-        type: "send_text",
-        text: welcomeText,
-        parseMode: "HTML",
-      },
-    ];
-
-    const menuKb = resolveKeyboard(content, "main_menu", mainMenuKeyboard);
-
-    if (config.welcomeVideoPath) {
-      actions.push({
-        type: "send_video_note",
-        source: config.welcomeVideoPath,
-        keyboard: menuKb,
-      });
-    } else if (config.welcomeImagePath) {
-      actions.push({
-        type: "send_photo",
-        source: config.welcomeImagePath,
-        keyboard: menuKb,
-      });
-    } else {
-      actions.push({
-        type: "send_text",
-        text: "Выберите действие:",
-        keyboard: menuKb,
-      });
+    if (welcomeSection && sectionHasMedia(welcomeSection)) {
+      return {
+        mediaType: welcomeSection.mediaType ?? "none",
+        mediaPath: welcomeSection.mediaPath,
+      };
     }
 
-    return actions;
+    if (config.welcomeVideoPath) {
+      return { mediaType: "video_note", mediaPath: config.welcomeVideoPath };
+    }
+    if (config.welcomeImagePath) {
+      return { mediaType: "image", mediaPath: config.welcomeImagePath };
+    }
+
+    return { mediaType: "none" };
+  }
+
+  function sectionDisplayActions(
+    section: DynamicSection,
+    keyboard: ReturnType<typeof resolveKeyboard>,
+    messageId?: string,
+  ): BotAction[] {
+    return buildSectionDisplayActions({
+      text: formatSectionBody(section),
+      parseMode: section.parseMode === "Markdown" ? "Markdown" : "HTML",
+      keyboard,
+      mediaType: section.mediaType,
+      mediaPath: section.mediaPath,
+      messageId,
+    });
+  }
+
+  function handleStart(firstName?: string): BotAction[] {
+    const content = getEffectiveContent();
+    const welcomeText =
+      getWelcomeText(content, firstName) ?? buildWelcomeText(firstName);
+    const menuKb = resolveKeyboard(content, "main_menu", mainMenuKeyboard);
+    const welcomeMedia = resolveWelcomeMedia(content);
+
+    return buildSectionDisplayActions({
+      text: welcomeText,
+      parseMode: "HTML",
+      keyboard: menuKb,
+      mediaType: welcomeMedia.mediaType,
+      mediaPath: welcomeMedia.mediaPath,
+    });
   }
 
   function handleCallback(
     payload: string,
     messageId?: string,
   ): BotAction[] {
-    const config = getEffectiveConfig();
     const content = getEffectiveContent();
 
     const aboutSteps = content ? getAboutSteps(content) : null;
@@ -102,42 +119,20 @@ export function createBotHandlers() {
         return aboutStepActions(1, messageId, totalAboutSteps);
 
       case Callback.DEMO:
-        return [
-          {
-            type: "send_text",
-            text: getSectionText(content, "demo") ?? buildDemoText(),
-            keyboard: resolveKeyboard(content, "demo", () =>
-              demoKeyboard(config.loomVideoUrl),
-            ),
-            parseMode: "HTML",
-          },
-        ];
+        return navigateToSection("demo", messageId);
 
       case Callback.TRY:
-        return [
-          {
-            type: "send_text",
-            text: getSectionText(content, "try") ?? buildTryText(config),
-            keyboard: resolveKeyboard(content, "try", () =>
-              tryKeyboard(config.grosterUrl),
-            ),
-            parseMode: "HTML",
-          },
-        ];
+        return navigateToSection("try", messageId);
 
       case Callback.IMPL:
-        return [
-          {
-            type: "send_text",
-            text: getSectionText(content, "impl") ?? buildImplementText(config),
-            keyboard: resolveKeyboard(content, "impl", () =>
-              implementKeyboard(config.contactUrl),
-            ),
-            parseMode: "HTML",
-          },
-        ];
+        return navigateToSection("impl", messageId);
 
       case Callback.MENU: {
+        const menuSection = getSectionBySlug(content, "menu");
+        if (menuSection) {
+          return navigateToSection("menu", messageId);
+        }
+
         const menuText =
           getMenuText(content) ?? "Главное меню Maivy. Выберите действие:";
         const menuKb = resolveKeyboard(content, "main_menu", mainMenuKeyboard);
@@ -214,37 +209,19 @@ export function createBotHandlers() {
         ? () => aboutStepKeyboard(aboutStep ?? 1, totalAboutSteps)
         : keyboardId === "main_menu"
           ? mainMenuKeyboard
-          : backToMenuKeyboard,
+          : keyboardId === "demo"
+            ? () => demoKeyboard(getEffectiveConfig().loomVideoUrl)
+            : keyboardId === "try"
+              ? () => tryKeyboard(getEffectiveConfig().grosterUrl)
+              : keyboardId === "impl"
+                ? () => implementKeyboard(getEffectiveConfig().contactUrl)
+                : backToMenuKeyboard,
       keyboardId === "about_step"
         ? { aboutStep: aboutStep ?? 1, totalAboutSteps }
         : undefined,
     );
 
-    let text = section.body;
-    if (section.sectionType === "about_step" && section.title) {
-      text = `<b>${section.title}</b>\n\n${section.body}`;
-    }
-
-    if (messageId) {
-      return [
-        {
-          type: "edit_text",
-          messageId,
-          text,
-          keyboard,
-          parseMode: "HTML",
-        },
-      ];
-    }
-
-    return [
-      {
-        type: "send_text",
-        text,
-        keyboard,
-        parseMode: "HTML",
-      },
-    ];
+    return sectionDisplayActions(section, keyboard, messageId);
   }
 
   function aboutStepActions(
@@ -253,6 +230,18 @@ export function createBotHandlers() {
     totalAboutSteps: number,
   ): BotAction[] {
     const content = getEffectiveContent();
+    const aboutSteps = content ? getAboutSteps(content) : null;
+    const section = aboutSteps?.[step - 1];
+
+    if (section) {
+      const keyboard = resolveKeyboard(
+        content,
+        "about_step",
+        () => aboutStepKeyboard(step, totalAboutSteps),
+        { aboutStep: step, totalAboutSteps },
+      );
+      return sectionDisplayActions(section, keyboard, messageId);
+    }
 
     if (step < 1 || step > totalAboutSteps) {
       return [
@@ -264,9 +253,7 @@ export function createBotHandlers() {
       ];
     }
 
-    const text =
-      getAboutStepTextFromContent(content, step) ?? getAboutStepText(step);
-
+    const text = getAboutStepTextFromContent(content, step) ?? getAboutStepText(step);
     const keyboard = resolveKeyboard(
       content,
       "about_step",

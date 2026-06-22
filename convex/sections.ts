@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { requireAdminSession } from "./lib/auth";
-import { sectionTypeValidator } from "./lib/validators";
+import { sectionMediaTypeValidator, sectionTypeValidator } from "./lib/validators";
 
 const sectionDocValidator = v.object({
   _id: v.id("sections"),
@@ -13,6 +13,8 @@ const sectionDocValidator = v.object({
   order: v.number(),
   sectionType: sectionTypeValidator,
   keyboardId: v.optional(v.string()),
+  mediaType: v.optional(sectionMediaTypeValidator),
+  mediaPath: v.optional(v.string()),
   isPublished: v.boolean(),
   parseMode: v.union(v.literal("HTML"), v.literal("Markdown")),
   updatedAt: v.number(),
@@ -51,6 +53,8 @@ export const create = mutation({
     sectionType: sectionTypeValidator,
     isPublished: v.boolean(),
     keyboardId: v.optional(v.string()),
+    mediaType: v.optional(sectionMediaTypeValidator),
+    mediaPath: v.optional(v.string()),
     parseMode: v.optional(v.union(v.literal("HTML"), v.literal("Markdown"))),
   },
   returns: v.id("sections"),
@@ -76,6 +80,8 @@ export const create = mutation({
       order: args.order,
       sectionType: args.sectionType,
       keyboardId: args.keyboardId,
+      mediaType: args.mediaType ?? "none",
+      mediaPath: args.mediaPath,
       isPublished: args.isPublished,
       parseMode: args.parseMode ?? "HTML",
       updatedAt: Date.now(),
@@ -93,6 +99,8 @@ export const update = mutation({
     order: v.optional(v.number()),
     sectionType: v.optional(sectionTypeValidator),
     keyboardId: v.optional(v.string()),
+    mediaType: v.optional(sectionMediaTypeValidator),
+    mediaPath: v.optional(v.string()),
     isPublished: v.optional(v.boolean()),
     parseMode: v.optional(v.union(v.literal("HTML"), v.literal("Markdown"))),
   },
@@ -112,6 +120,10 @@ export const update = mutation({
     if (args.order !== undefined) updates.order = args.order;
     if (args.sectionType !== undefined) updates.sectionType = args.sectionType;
     if (args.keyboardId !== undefined) updates.keyboardId = args.keyboardId;
+    if (args.mediaType !== undefined) updates.mediaType = args.mediaType;
+    if (args.mediaPath !== undefined) {
+      updates.mediaPath = args.mediaPath.trim() ? args.mediaPath.trim() : undefined;
+    }
     if (args.isPublished !== undefined) updates.isPublished = args.isPublished;
     if (args.parseMode !== undefined) updates.parseMode = args.parseMode;
 
@@ -195,6 +207,9 @@ export const duplicate = mutation({
       body: section.body,
       order: maxOrder + 1,
       sectionType: section.sectionType,
+      keyboardId: section.keyboardId,
+      mediaType: section.mediaType,
+      mediaPath: section.mediaPath,
       isPublished: false,
       parseMode: section.parseMode,
       updatedAt: Date.now(),

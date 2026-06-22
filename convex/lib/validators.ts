@@ -25,6 +25,13 @@ export const sectionTypeValidator = v.union(
   v.literal("system"),
 );
 
+export const sectionMediaTypeValidator = v.union(
+  v.literal("none"),
+  v.literal("image"),
+  v.literal("video"),
+  v.literal("video_note"),
+);
+
 export const buttonTypeValidator = v.union(
   v.literal("callback"),
   v.literal("url"),

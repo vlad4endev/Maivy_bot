@@ -1,5 +1,6 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
+import { sectionMediaTypeValidator } from "./lib/validators";
 
 const platformValidator = v.union(v.literal("telegram"), v.literal("max"));
 
@@ -50,6 +51,8 @@ export default defineSchema({
       v.literal("system"),
     ),
     keyboardId: v.optional(v.string()),
+    mediaType: v.optional(sectionMediaTypeValidator),
+    mediaPath: v.optional(v.string()),
     isPublished: v.boolean(),
     parseMode: v.union(v.literal("HTML"), v.literal("Markdown")),
     updatedAt: v.number(),

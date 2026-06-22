@@ -10,6 +10,8 @@ export interface DynamicSection {
   order: number;
   sectionType: string;
   keyboardId?: string;
+  mediaType?: "none" | "image" | "video" | "video_note";
+  mediaPath?: string;
   parseMode: string;
 }
 

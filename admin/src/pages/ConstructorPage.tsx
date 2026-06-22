@@ -10,11 +10,13 @@ import {
   buttonNeedsTargetLink,
   normalizeUrl,
   resolveTargetLabel,
+  SECTION_MEDIA_LABELS,
   SECTION_TYPE_LABELS,
   SPECIAL_ACTIONS,
 } from "../lib/utils";
 
 type SectionType = "welcome" | "about_step" | "section" | "system";
+type SectionMediaType = "none" | "image" | "video" | "video_note";
 type ButtonType = "callback" | "url";
 type UrlSource = "loomVideoUrl" | "grosterUrl" | "contactUrl" | "";
 
@@ -25,6 +27,8 @@ interface SectionForm {
   order: number;
   sectionType: SectionType;
   keyboardId: string;
+  mediaType: SectionMediaType;
+  mediaPath: string;
   isPublished: boolean;
   parseMode: "HTML" | "Markdown";
 }
@@ -47,6 +51,8 @@ const EMPTY_SECTION: SectionForm = {
   order: 0,
   sectionType: "section",
   keyboardId: "",
+  mediaType: "none",
+  mediaPath: "",
   isPublished: true,
   parseMode: "HTML",
 };
@@ -69,6 +75,8 @@ function sectionToForm(section: {
   order: number;
   sectionType: SectionType;
   keyboardId?: string;
+  mediaType?: SectionMediaType;
+  mediaPath?: string;
   isPublished: boolean;
   parseMode: "HTML" | "Markdown";
 }): SectionForm {
@@ -79,6 +87,8 @@ function sectionToForm(section: {
     order: section.order,
     sectionType: section.sectionType,
     keyboardId: section.keyboardId ?? "",
+    mediaType: section.mediaType ?? "none",
+    mediaPath: section.mediaPath ?? "",
     isPublished: section.isPublished,
     parseMode: section.parseMode,
   };
@@ -182,6 +192,8 @@ export function ConstructorPage() {
         order: sectionForm.order,
         sectionType: sectionForm.sectionType,
         keyboardId: sectionForm.keyboardId || undefined,
+        mediaType: sectionForm.mediaType,
+        mediaPath: sectionForm.mediaPath.trim() || undefined,
         isPublished: sectionForm.isPublished,
         parseMode: sectionForm.parseMode,
       });
@@ -206,6 +218,8 @@ export function ConstructorPage() {
         order: sectionForm.order,
         sectionType: sectionForm.sectionType,
         keyboardId: sectionForm.keyboardId || undefined,
+        mediaType: sectionForm.mediaType,
+        mediaPath: sectionForm.mediaPath.trim() || undefined,
         isPublished: sectionForm.isPublished,
         parseMode: sectionForm.parseMode,
       });
@@ -380,6 +394,9 @@ export function ConstructorPage() {
               Для каждой кнопки в блоке «Кнопки и переходы» выберите <strong>куда ведёт нажатие</strong> → целевой экран.
             </li>
             <li>
+              <strong>Медиа</strong> — фото, видео или кружок отправляются отдельным сообщением после текста.
+            </li>
+            <li>
               Нажмите <strong>Опубликовать</strong>, чтобы экран был виден в боте.
             </li>
           </ol>
@@ -453,6 +470,11 @@ export function ConstructorPage() {
                       <div className="flow-node-meta">
                         <code>{section.slug}</code>
                         <span>{SECTION_TYPE_LABELS[section.sectionType]}</span>
+                        {section.mediaType && section.mediaType !== "none" && (
+                          <span className="badge badge-info">
+                            {SECTION_MEDIA_LABELS[section.mediaType]}
+                          </span>
+                        )}
                       </div>
                       {section.buttons.length > 0 && (
                         <div className="flow-node-transitions">
@@ -593,6 +615,52 @@ export function ConstructorPage() {
                         required
                       />
                     </div>
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label>Медиа после текста</label>
+                        <select
+                          value={sectionForm.mediaType}
+                          onChange={(e) => {
+                            setSectionForm({
+                              ...sectionForm,
+                              mediaType: e.target.value as SectionMediaType,
+                              mediaPath:
+                                e.target.value === "none" ? "" : sectionForm.mediaPath,
+                            });
+                            setSectionDirty(true);
+                          }}
+                        >
+                          {Object.entries(SECTION_MEDIA_LABELS).map(([value, label]) => (
+                            <option key={value} value={value}>
+                              {label}
+                            </option>
+                          ))}
+                        </select>
+                        <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: 6 }}>
+                          Текст и медиа отправляются отдельными сообщениями. Кнопки — под медиа
+                          (или под текстом, если медиа нет).
+                        </p>
+                      </div>
+                      {sectionForm.mediaType !== "none" && (
+                        <div className="form-group">
+                          <label>Путь к файлу в assets/</label>
+                          <input
+                            value={sectionForm.mediaPath}
+                            onChange={(e) => {
+                              setSectionForm({ ...sectionForm, mediaPath: e.target.value });
+                              setSectionDirty(true);
+                            }}
+                            placeholder={
+                              sectionForm.mediaType === "video_note"
+                                ? "assets/welcome-video.mp4"
+                                : sectionForm.mediaType === "image"
+                                  ? "assets/welcome.jpg"
+                                  : "assets/demo.mp4"
+                            }
+                          />
+                        </div>
+                      )}
+                    </div>
                     <div className="constructor-preview-row">
                       <div className="constructor-preview card">
                         <h4>Предпросмотр Telegram</h4>
@@ -600,6 +668,12 @@ export function ConstructorPage() {
                           className="tg-preview-bubble"
                           dangerouslySetInnerHTML={{ __html: sectionForm.body }}
                         />
+                        {sectionForm.mediaType !== "none" && (
+                          <div className="tg-preview-media">
+                            {SECTION_MEDIA_LABELS[sectionForm.mediaType]}
+                            {sectionForm.mediaPath ? `: ${sectionForm.mediaPath}` : ""}
+                          </div>
+                        )}
                         <div className="tg-preview-keyboard">
                           {keyboardPreview.map(({ row, buttons }) => (
                             <div key={row} className="tg-preview-row">
@@ -616,7 +690,7 @@ export function ConstructorPage() {
                     {sectionDirty && (
                       <div className="constructor-save-bar">
                         <button type="submit" className="btn btn-primary">
-                          Сохранить текст экрана
+                          Сохранить экран
                         </button>
                       </div>
                     )}

@@ -152,6 +152,13 @@ export const SECTION_TYPE_LABELS: Record<string, string> = {
   system: "Системный",
 };
 
+export const SECTION_MEDIA_LABELS: Record<string, string> = {
+  none: "Без медиа",
+  image: "Фото",
+  video: "Видео",
+  video_note: "Видео-кружок",
+};
+
 export const CALLBACK_LABELS: Record<string, string> = {
   about_more: "Узнать больше (первый шаг)",
   about_next: "Следующий шаг (шаблон)",

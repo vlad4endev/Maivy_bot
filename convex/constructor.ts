@@ -2,7 +2,7 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { requireAdminSession } from "./lib/auth";
 import { resolveSectionKeyboardId } from "./lib/sectionKeyboard";
-import { buttonTypeValidator, sectionTypeValidator } from "./lib/validators";
+import { buttonTypeValidator, sectionMediaTypeValidator, sectionTypeValidator } from "./lib/validators";
 
 const flowButtonValidator = v.object({
   _id: v.id("keyboardButtons"),
@@ -33,6 +33,8 @@ const flowSectionValidator = v.object({
   order: v.number(),
   sectionType: sectionTypeValidator,
   keyboardId: v.optional(v.string()),
+  mediaType: v.optional(sectionMediaTypeValidator),
+  mediaPath: v.optional(v.string()),
   resolvedKeyboardId: v.string(),
   isPublished: v.boolean(),
   parseMode: v.union(v.literal("HTML"), v.literal("Markdown")),
@@ -131,6 +133,8 @@ export const getFlow = query({
         order: section.order,
         sectionType: section.sectionType,
         keyboardId: section.keyboardId,
+        mediaType: section.mediaType,
+        mediaPath: section.mediaPath,
         resolvedKeyboardId,
         isPublished: section.isPublished,
         parseMode: section.parseMode,

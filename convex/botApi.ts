@@ -2,7 +2,7 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { verifyBotApiSecret } from "./lib/auth";
 import { normalizeUrl } from "./lib/urls";
-import { platformValidator } from "./lib/validators";
+import { platformValidator, sectionMediaTypeValidator } from "./lib/validators";
 
 const keyboardRowValidator = v.array(
   v.object({
@@ -44,6 +44,8 @@ const botContentValidator = v.object({
       order: v.number(),
       sectionType: v.string(),
       keyboardId: v.optional(v.string()),
+      mediaType: v.optional(sectionMediaTypeValidator),
+      mediaPath: v.optional(v.string()),
       parseMode: v.string(),
     }),
   ),
@@ -106,6 +108,8 @@ export const getBotContent = query({
         order: s.order,
         sectionType: s.sectionType,
         keyboardId: s.keyboardId,
+        mediaType: s.mediaType,
+        mediaPath: s.mediaPath,
         parseMode: s.parseMode,
       }));
 
