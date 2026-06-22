@@ -148,7 +148,7 @@ export function BotsPage() {
           <p>Создайте бота по умолчанию или добавьте новый, затем настройте его в разделе «Настройки»</p>
         </div>
       ) : (
-        <div className="card table-wrap">
+        <div className="card table-wrap responsive-table">
           <table>
             <thead>
               <tr>
@@ -163,10 +163,10 @@ export function BotsPage() {
             <tbody>
               {bots.map((bot) => (
                 <tr key={bot._id}>
-                  <td><strong>{bot.name}</strong></td>
-                  <td><code>{bot.slug}</code></td>
-                  <td>{bot.platforms.join(", ") || "—"}</td>
-                  <td>
+                  <td data-label="Название"><strong>{bot.name}</strong></td>
+                  <td data-label="Slug"><code>{bot.slug}</code></td>
+                  <td data-label="Платформы">{bot.platforms.join(", ") || "—"}</td>
+                  <td data-label="Статус">
                     <button
                       type="button"
                       className={`toggle${bot.enabled ? " on" : ""}`}
@@ -174,8 +174,8 @@ export function BotsPage() {
                       title={bot.enabled ? "Выключить" : "Включить"}
                     />
                   </td>
-                  <td>{formatDate(bot.updatedAt)}</td>
-                  <td>
+                  <td data-label="Обновлён">{formatDate(bot.updatedAt)}</td>
+                  <td data-label="Действия" className="td-actions">
                     <div className="btn-group">
                       <Link to="/settings" className="btn btn-sm">Настройки</Link>
                       <button type="button" className="btn btn-sm" onClick={() => openEdit(bot)}>

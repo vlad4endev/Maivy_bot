@@ -105,9 +105,7 @@ export function AnalyticsPage() {
                 ) : (
                   heatmap.map((item) => (
                     <div key={item.payload} className="funnel-bar">
-                      <span className="label" style={{ width: 160 }}>
-                        {CALLBACK_LABELS[item.payload] ?? item.payload}
-                      </span>
+                      <span className="label">{CALLBACK_LABELS[item.payload] ?? item.payload}</span>
                       <div className="bar-wrap">
                         <div
                           className="bar"

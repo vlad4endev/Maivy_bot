@@ -1,6 +1,7 @@
-import { NavLink, Outlet } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../lib/auth";
-import { APP_ICON, FiLogOut, NAV_ICONS } from "./icons";
+import { APP_ICON, FiLogOut, FiMenu, FiX, NAV_ICONS } from "./icons";
 
 const NAV_ITEMS = [
   { to: "/", icon: NAV_ICONS.dashboard, label: "Дашборд", end: true },
@@ -14,10 +15,45 @@ const NAV_ITEMS = [
 
 export function Layout() {
   const { logout } = useAuth();
+  const location = useLocation();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const BrandIcon = APP_ICON;
 
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    document.body.style.overflow = sidebarOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [sidebarOpen]);
+
   return (
-    <div className="layout">
+    <div className={`layout${sidebarOpen ? " sidebar-open" : ""}`}>
+      <header className="mobile-header">
+        <button
+          type="button"
+          className="mobile-menu-btn"
+          onClick={() => setSidebarOpen((open) => !open)}
+          aria-expanded={sidebarOpen}
+          aria-label={sidebarOpen ? "Закрыть меню" : "Открыть меню"}
+        >
+          {sidebarOpen ? <FiX size={22} /> : <FiMenu size={22} />}
+        </button>
+        <span className="mobile-header-title">Maivy Admin</span>
+      </header>
+
+      {sidebarOpen ? (
+        <button
+          type="button"
+          className="sidebar-backdrop"
+          aria-label="Закрыть меню"
+          onClick={() => setSidebarOpen(false)}
+        />
+      ) : null}
+
       <aside className="sidebar">
         <div className="sidebar-brand">
           <div className="sidebar-brand-row">
@@ -41,6 +77,7 @@ export function Layout() {
                 className={({ isActive }) =>
                   `nav-link${isActive ? " active" : ""}`
                 }
+                onClick={() => setSidebarOpen(false)}
               >
                 <span className="nav-icon" aria-hidden="true">
                   <Icon size={18} />

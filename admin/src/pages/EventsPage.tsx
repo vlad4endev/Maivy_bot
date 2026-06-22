@@ -39,17 +39,11 @@ export function EventsPage() {
 
         <BotSelector />
 
-        <div style={{ marginBottom: 16 }}>
+        <div className="filters-bar">
           <select
+            className="filter-select"
             value={eventType}
             onChange={(e) => setEventType(e.target.value as typeof eventType)}
-            style={{
-              padding: "8px 12px",
-              background: "var(--bg-elevated)",
-              border: "1px solid var(--border)",
-              borderRadius: 8,
-              color: "var(--text)",
-            }}
           >
             <option value="">Все типы</option>
             <option value="start">Старт</option>
@@ -66,7 +60,7 @@ export function EventsPage() {
             <p>События появятся после активности пользователей</p>
           </div>
         ) : (
-          <div className="card table-wrap">
+          <div className="card table-wrap responsive-table">
             <table>
               <thead>
                 <tr>
@@ -80,15 +74,15 @@ export function EventsPage() {
               <tbody>
                 {events.page.map((event) => (
                   <tr key={event._id}>
-                    <td>{formatDate(event.createdAt)}</td>
-                    <td>
+                    <td data-label="Время">{formatDate(event.createdAt)}</td>
+                    <td data-label="Тип">
                       <span className={`badge badge-${event.eventType === "start" ? "success" : "info"}`}>
                         {event.eventType}
                       </span>
                     </td>
-                    <td><code>{event.payload ?? "—"}</code></td>
-                    <td>{event.sectionSlug ?? "—"}</td>
-                    <td><span className="badge">{event.platform}</span></td>
+                    <td data-label="Payload"><code>{event.payload ?? "—"}</code></td>
+                    <td data-label="Раздел">{event.sectionSlug ?? "—"}</td>
+                    <td data-label="Платформа"><span className="badge">{event.platform}</span></td>
                   </tr>
                 ))}
               </tbody>

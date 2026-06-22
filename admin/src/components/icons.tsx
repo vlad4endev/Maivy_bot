@@ -9,10 +9,12 @@ import {
   FiGitBranch,
   FiGrid,
   FiLogOut,
+  FiMenu,
   FiMessageCircle,
   FiMousePointer,
   FiSettings,
   FiUsers,
+  FiX,
   FiZap,
 } from "react-icons/fi";
 
@@ -39,10 +41,12 @@ export {
   FiGitBranch,
   FiGrid,
   FiLogOut,
+  FiMenu,
   FiMessageCircle,
   FiMousePointer,
   FiSettings,
   FiUsers,
+  FiX,
   FiZap,
 };
 

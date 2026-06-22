@@ -123,7 +123,7 @@ export function UsersPage() {
           </div>
         )}
 
-        <div className="btn-group" style={{ marginBottom: 16 }}>
+        <div className="filters-bar">
           <input
             className="search-input"
             placeholder="Поиск по имени, username, ID..."
@@ -131,15 +131,9 @@ export function UsersPage() {
             onChange={(e) => setSearch(e.target.value)}
           />
           <select
+            className="filter-select"
             value={platform}
             onChange={(e) => setPlatform(e.target.value as "" | "telegram" | "max")}
-            style={{
-              padding: "8px 12px",
-              background: "var(--bg-elevated)",
-              border: "1px solid var(--border)",
-              borderRadius: 8,
-              color: "var(--text)",
-            }}
           >
             <option value="">Все платформы</option>
             <option value="telegram">Telegram</option>
@@ -156,7 +150,7 @@ export function UsersPage() {
           </div>
         ) : (
           <>
-            <div className="card table-wrap">
+            <div className="card table-wrap responsive-table">
               <table>
                 <thead>
                   <tr>
@@ -184,8 +178,8 @@ export function UsersPage() {
 
                     return (
                       <tr key={user._id}>
-                        <td>{user.firstName ?? "—"}</td>
-                        <td>
+                        <td data-label="Имя">{user.firstName ?? "—"}</td>
+                        <td data-label="Username">
                           {profileUrl ? (
                             <a
                               href={profileUrl}
@@ -200,24 +194,24 @@ export function UsersPage() {
                             "—"
                           )}
                         </td>
-                        <td>
+                        <td data-label="ID">
                           <code>{user.platformUserId}</code>
                         </td>
-                        <td>
+                        <td data-label="Платформа">
                           <span className="badge badge-info">{user.platform}</span>
                         </td>
-                        <td>{user.startCount}</td>
-                        <td>{user.lastSection ?? "—"}</td>
-                        <td>{formatDate(user.firstSeenAt)}</td>
-                        <td>{formatDate(user.lastSeenAt)}</td>
-                        <td>
+                        <td data-label="Стартов">{user.startCount}</td>
+                        <td data-label="Раздел">{user.lastSection ?? "—"}</td>
+                        <td data-label="Первый визит">{formatDate(user.firstSeenAt)}</td>
+                        <td data-label="Последний визит">{formatDate(user.lastSeenAt)}</td>
+                        <td data-label="Статус">
                           {user.isBlocked ? (
                             <span className="badge badge-danger">Заблокирован</span>
                           ) : (
                             <span className="badge badge-success">Активен</span>
                           )}
                         </td>
-                        <td>
+                        <td data-label="Действия" className="td-actions">
                           <div className="btn-group">
                             {chatUrl && (
                               <button

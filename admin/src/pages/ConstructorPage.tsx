@@ -352,7 +352,7 @@ export function ConstructorPage() {
 
         {needsLinking && (
           <div className="card" style={{ marginBottom: 16, padding: "12px 16px" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+            <div className="constructor-link-banner">
               <p style={{ fontSize: "0.875rem", color: "var(--text-muted)" }}>
                 У части кнопок не указан целевой экран. Обновите связи для отображения переходов в конструкторе.
               </p>
