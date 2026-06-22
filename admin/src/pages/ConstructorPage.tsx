@@ -6,6 +6,7 @@ import { useAuth } from "../lib/auth";
 import { BotProvider, BotSelector } from "../components/BotSelector";
 import { NAV_ICONS } from "../components/icons";
 import { PageHeader } from "../components/PageHeader";
+import { MediaUpload, type MediaUploadKind } from "../components/MediaUpload";
 import {
   buttonNeedsTargetLink,
   normalizeUrl,
@@ -67,6 +68,12 @@ const EMPTY_BUTTON: ButtonForm = {
   urlSource: "",
   isEnabled: true,
 };
+
+function sectionMediaUploadKind(mediaType: SectionMediaType): MediaUploadKind {
+  if (mediaType === "image") return "image";
+  if (mediaType === "video") return "video";
+  return "video_note";
+}
 
 function sectionToForm(section: {
   slug: string;
@@ -642,23 +649,22 @@ export function ConstructorPage() {
                         </p>
                       </div>
                       {sectionForm.mediaType !== "none" && (
-                        <div className="form-group">
-                          <label>Путь к файлу в assets/</label>
-                          <input
-                            value={sectionForm.mediaPath}
-                            onChange={(e) => {
-                              setSectionForm({ ...sectionForm, mediaPath: e.target.value });
-                              setSectionDirty(true);
-                            }}
-                            placeholder={
-                              sectionForm.mediaType === "video_note"
-                                ? "assets/welcome-video.mp4"
-                                : sectionForm.mediaType === "image"
-                                  ? "assets/welcome.jpg"
-                                  : "assets/demo.mp4"
-                            }
-                          />
-                        </div>
+                        <MediaUpload
+                          label="Медиафайл"
+                          kind={sectionMediaUploadKind(sectionForm.mediaType)}
+                          value={sectionForm.mediaPath}
+                          onChange={(value) => {
+                            setSectionForm({ ...sectionForm, mediaPath: value });
+                            setSectionDirty(true);
+                          }}
+                          pathPlaceholder={
+                            sectionForm.mediaType === "video_note"
+                              ? "assets/welcome-video.mp4"
+                              : sectionForm.mediaType === "image"
+                                ? "assets/welcome.jpg"
+                                : "assets/demo.mp4"
+                          }
+                        />
                       )}
                     </div>
                     <div className="constructor-preview-row">

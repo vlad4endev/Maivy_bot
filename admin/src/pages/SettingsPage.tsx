@@ -6,6 +6,7 @@ import { useAuth } from "../lib/auth";
 import { BotProvider, BotSelector } from "../components/BotSelector";
 import { NAV_ICONS } from "../components/icons";
 import { PageHeader } from "../components/PageHeader";
+import { MediaUpload } from "../components/MediaUpload";
 import { buildContactUrl, formatDate, normalizeUrl } from "../lib/utils";
 
 type Tab = "platforms" | "content" | "media";
@@ -525,28 +526,23 @@ export function SettingsPage() {
 
               {tab === "media" && (
                 <>
-                  <div className="form-group">
-                    <label htmlFor="welcomeImagePath">WELCOME_IMAGE_PATH</label>
-                    <input
-                      id="welcomeImagePath"
-                      value={form.welcomeImagePath}
-                      onChange={(e) => updateField("welcomeImagePath", e.target.value)}
-                      placeholder="assets/welcome.jpg"
-                    />
-                    <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: 4 }}>
-                      Путь относительно корня проекта на сервере, где запущен бот
-                    </p>
-                  </div>
+                  <MediaUpload
+                    label="Фото профиля и fallback"
+                    kind="image"
+                    value={form.welcomeImagePath}
+                    onChange={(value) => updateField("welcomeImagePath", value)}
+                    pathPlaceholder="assets/welcome.jpg"
+                    hint="JPG/PNG/WebP до 10 МБ. Используется для фото профиля бота и как запасной вариант, если нет видео."
+                  />
 
-                  <div className="form-group">
-                    <label htmlFor="welcomeVideoPath">WELCOME_VIDEO_PATH</label>
-                    <input
-                      id="welcomeVideoPath"
-                      value={form.welcomeVideoPath}
-                      onChange={(e) => updateField("welcomeVideoPath", e.target.value)}
-                      placeholder="assets/welcome-video.mp4"
-                    />
-                  </div>
+                  <MediaUpload
+                    label="Видео / кружок (Telegram video note, MAX video)"
+                    kind="video_note"
+                    value={form.welcomeVideoPath}
+                    onChange={(value) => updateField("welcomeVideoPath", value)}
+                    pathPlaceholder="assets/welcome-video.mp4"
+                    hint="MP4, квадратное 1:1, до 50 МБ. Для Telegram отправляется как кружок."
+                  />
 
                   <div className="form-group">
                     <label htmlFor="telegramVideoNoteFileId">TELEGRAM_VIDEO_NOTE_FILE_ID</label>
@@ -554,8 +550,12 @@ export function SettingsPage() {
                       id="telegramVideoNoteFileId"
                       value={form.telegramVideoNoteFileId}
                       onChange={(e) => updateField("telegramVideoNoteFileId", e.target.value)}
-                      placeholder="Опционально — после первой загрузки видео"
+                      placeholder="Опционально — заполняется после первой отправки в Telegram"
                     />
+                    <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: 4 }}>
+                      Если указан, Telegram использует сохранённый file_id вместо повторной загрузки
+                      видео. Можно оставить пустым при загрузке через админку.
+                    </p>
                   </div>
                 </>
               )}

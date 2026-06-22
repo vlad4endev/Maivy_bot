@@ -1558,3 +1558,81 @@ tr:hover td {
   color: var(--accent-hover);
   font-weight: 700;
 }
+
+/* Media upload */
+.media-upload-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.media-upload-input {
+  display: none;
+}
+
+.media-upload-hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+  line-height: 1.5;
+}
+
+.media-upload-error {
+  margin-top: 8px;
+  margin-bottom: 0;
+}
+
+.media-upload-preview {
+  margin-top: 12px;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  max-width: 320px;
+}
+
+.media-upload-preview img,
+.media-upload-preview video {
+  display: block;
+  width: 100%;
+  max-height: 240px;
+  object-fit: contain;
+}
+
+.media-upload-ref {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 8px;
+}
+
+.media-upload-toggle-path {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--accent-hover);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.media-upload-path {
+  width: 100%;
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+}
+
+.tg-preview-media {
+  margin: 10px 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}

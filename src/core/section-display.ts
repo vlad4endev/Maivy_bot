@@ -20,6 +20,14 @@ export function resolveSectionMediaPath(mediaPath?: string): string | undefined 
   }
 
   const trimmed = mediaPath.trim();
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+    return trimmed;
+  }
+
+  if (trimmed.startsWith("storage:")) {
+    return undefined;
+  }
+
   if (path.isAbsolute(trimmed)) {
     return existsSync(trimmed) ? trimmed : undefined;
   }

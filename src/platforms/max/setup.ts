@@ -1,10 +1,10 @@
-import { existsSync } from "node:fs";
 import type { Bot } from "@maxhub/max-bot-api";
 import type { AppContentConfig } from "../../config.js";
 import {
   buildBotProfileDescription,
   buildBotShortDescription,
 } from "../../core/content.js";
+import { resolveLocalMediaSource } from "../../lib/remote-media.js";
 
 export async function setupMaxProfile(
   bot: Bot,
@@ -21,9 +21,13 @@ export async function setupMaxProfile(
     photo?: { url: string };
   } = { description };
 
-  if (config.welcomeImagePath && existsSync(config.welcomeImagePath)) {
+  const localImagePath = config.welcomeImagePath
+    ? await resolveLocalMediaSource(config.welcomeImagePath)
+    : undefined;
+
+  if (localImagePath) {
     const uploaded = await bot.api.uploadImage({
-      source: config.welcomeImagePath,
+      source: localImagePath,
     });
 
     if ("url" in uploaded && uploaded.url) {

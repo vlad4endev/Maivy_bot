@@ -17,9 +17,11 @@ import type * as buttons from "../buttons.js";
 import type * as constructor from "../constructor.js";
 import type * as events from "../events.js";
 import type * as lib_auth from "../lib/auth.js";
+import type * as lib_mediaPaths from "../lib/mediaPaths.js";
 import type * as lib_sectionKeyboard from "../lib/sectionKeyboard.js";
 import type * as lib_urls from "../lib/urls.js";
 import type * as lib_validators from "../lib/validators.js";
+import type * as media from "../media.js";
 import type * as sections from "../sections.js";
 import type * as seed from "../seed.js";
 
@@ -39,9 +41,11 @@ declare const fullApi: ApiFromModules<{
   constructor: typeof constructor;
   events: typeof events;
   "lib/auth": typeof lib_auth;
+  "lib/mediaPaths": typeof lib_mediaPaths;
   "lib/sectionKeyboard": typeof lib_sectionKeyboard;
   "lib/urls": typeof lib_urls;
   "lib/validators": typeof lib_validators;
+  media: typeof media;
   sections: typeof sections;
   seed: typeof seed;
 }>;

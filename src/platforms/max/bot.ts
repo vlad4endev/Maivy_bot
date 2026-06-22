@@ -1,9 +1,9 @@
-import { existsSync } from "node:fs";
 import {
   Bot,
   Keyboard,
   type Context,
 } from "@maxhub/max-bot-api";
+import { resolveLocalMediaSource } from "../../lib/remote-media.js";
 import type { BotAction, Keyboard as BotKeyboard } from "../../core/actions.js";
 import type { AppContentConfig, MaxDeliveryConfig } from "../../config.js";
 import type { BotHandlers } from "../../core/handlers.js";
@@ -295,11 +295,12 @@ async function uploadImageIfExists(
   ctx: Context,
   source: string,
 ): Promise<MaxAttachment | undefined> {
-  if (!existsSync(source)) {
+  const localPath = await resolveLocalMediaSource(source);
+  if (!localPath) {
     return undefined;
   }
 
-  const uploaded = await ctx.api.uploadImage({ source });
+  const uploaded = await ctx.api.uploadImage({ source: localPath });
 
   if ("url" in uploaded && uploaded.url) {
     return {
@@ -322,11 +323,12 @@ async function uploadVideoIfExists(
   ctx: Context,
   source: string,
 ): Promise<MaxAttachment | undefined> {
-  if (!existsSync(source)) {
+  const localPath = await resolveLocalMediaSource(source);
+  if (!localPath) {
     return undefined;
   }
 
-  const uploaded = await ctx.api.uploadVideo({ source });
+  const uploaded = await ctx.api.uploadVideo({ source: localPath });
   return {
     type: "video",
     payload: { token: uploaded.token },

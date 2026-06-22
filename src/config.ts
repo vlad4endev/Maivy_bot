@@ -144,11 +144,24 @@ export function buildContactUrl(username: string): string {
 export function resolveMediaPaths(settings: AppContentConfig): AppContentConfig {
   return {
     ...settings,
-    welcomeImagePath: settings.welcomeImagePath
-      ? resolveAssetPath(settings.welcomeImagePath)
-      : undefined,
-    welcomeVideoPath: settings.welcomeVideoPath
-      ? resolveAssetPath(settings.welcomeVideoPath)
-      : undefined,
+    welcomeImagePath: resolveStoredMediaPath(settings.welcomeImagePath),
+    welcomeVideoPath: resolveStoredMediaPath(settings.welcomeVideoPath),
   };
+}
+
+function resolveStoredMediaPath(mediaPath?: string): string | undefined {
+  if (!mediaPath?.trim()) {
+    return undefined;
+  }
+
+  const trimmed = mediaPath.trim();
+  if (
+    trimmed.startsWith("http://") ||
+    trimmed.startsWith("https://") ||
+    trimmed.startsWith("storage:")
+  ) {
+    return trimmed;
+  }
+
+  return resolveAssetPath(trimmed);
 }

@@ -2,6 +2,14 @@ import { existsSync } from "node:fs";
 import { InlineKeyboard, InputFile, type Api, type Context } from "grammy";
 import type { BotAction, Keyboard } from "../../core/actions.js";
 import type { AppContentConfig } from "../../config.js";
+import { isHttpMediaSource } from "../../lib/remote-media.js";
+
+function createTelegramMediaInput(source: string): InputFile {
+  if (isHttpMediaSource(source)) {
+    return new InputFile({ url: source });
+  }
+  return new InputFile(source);
+}
 
 export function buildTelegramKeyboard(
   keyboard?: Keyboard,
@@ -57,7 +65,7 @@ async function executeTelegramAction(
       return;
 
     case "send_photo":
-      await api.sendPhoto(chatId, new InputFile(action.source), {
+      await api.sendPhoto(chatId, createTelegramMediaInput(action.source), {
         caption: action.caption,
         parse_mode: action.parseMode,
         reply_markup: keyboard,
@@ -80,7 +88,7 @@ async function executeTelegramAction(
     }
 
     case "send_video":
-      await api.sendVideo(chatId, new InputFile(action.source), {
+      await api.sendVideo(chatId, createTelegramMediaInput(action.source), {
         caption: action.caption,
         reply_markup: keyboard,
       });
@@ -139,6 +147,10 @@ function resolveTelegramVideoSource(
 ): InputFile | string | undefined {
   if (config.telegramVideoNoteFileId) {
     return config.telegramVideoNoteFileId;
+  }
+
+  if (isHttpMediaSource(source)) {
+    return createTelegramMediaInput(source);
   }
 
   if (existsSync(source)) {

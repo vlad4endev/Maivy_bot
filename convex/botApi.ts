@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { verifyBotApiSecret } from "./lib/auth";
+import { resolveMediaRef } from "./lib/mediaPaths";
 import { normalizeUrl } from "./lib/urls";
 import { platformValidator, sectionMediaTypeValidator } from "./lib/validators";
 
@@ -98,20 +99,22 @@ export const getBotContent = query({
       .withIndex("by_bot", (q) => q.eq("botId", bot._id))
       .collect();
 
-    const publishedSections = sections
-      .filter((s) => s.isPublished)
-      .sort((a, b) => a.order - b.order)
-      .map((s) => ({
-        slug: s.slug,
-        title: s.title,
-        body: s.body,
-        order: s.order,
-        sectionType: s.sectionType,
-        keyboardId: s.keyboardId,
-        mediaType: s.mediaType,
-        mediaPath: s.mediaPath,
-        parseMode: s.parseMode,
-      }));
+    const publishedSections = await Promise.all(
+      sections
+        .filter((s) => s.isPublished)
+        .sort((a, b) => a.order - b.order)
+        .map(async (s) => ({
+          slug: s.slug,
+          title: s.title,
+          body: s.body,
+          order: s.order,
+          sectionType: s.sectionType,
+          keyboardId: s.keyboardId,
+          mediaType: s.mediaType,
+          mediaPath: await resolveMediaRef(ctx, s.mediaPath),
+          parseMode: s.parseMode,
+        })),
+    );
 
     const buttons = await ctx.db
       .query("keyboardButtons")
@@ -170,7 +173,11 @@ export const getBotContent = query({
       maxWebhookPath: bot.maxWebhookPath,
       webhookPort: bot.webhookPort,
       maxBotUsername: bot.maxBotUsername,
-      settings: bot.settings,
+      settings: {
+        ...bot.settings,
+        welcomeImagePath: await resolveMediaRef(ctx, bot.settings.welcomeImagePath),
+        welcomeVideoPath: await resolveMediaRef(ctx, bot.settings.welcomeVideoPath),
+      },
       sections: publishedSections,
       keyboards,
     };
