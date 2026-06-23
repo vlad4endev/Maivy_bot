@@ -55,9 +55,9 @@ if [[ -f docker-compose.yml ]]; then
   "${COMPOSE[@]}" run --rm convex-deploy
 fi
 
-echo "→ Пересборка bot (без кэша исходников)..."
-"${COMPOSE[@]}" build --no-cache bot
-"${COMPOSE[@]}" up -d bot
+echo "→ Пересборка admin и bot..."
+"${COMPOSE[@]}" build --no-cache admin bot
+"${COMPOSE[@]}" up -d admin bot
 
 echo ""
 if [[ -x scripts/docker-doctor.sh ]]; then
