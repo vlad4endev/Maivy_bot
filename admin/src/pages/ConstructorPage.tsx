@@ -7,6 +7,7 @@ import { BotProvider, BotSelector } from "../components/BotSelector";
 import { NAV_ICONS } from "../components/icons";
 import { PageHeader } from "../components/PageHeader";
 import { MediaUpload, type MediaUploadKind } from "../components/MediaUpload";
+import { MessengerTextEditor } from "../components/MessengerTextEditor";
 import {
   buttonNeedsTargetLink,
   normalizeUrl,
@@ -610,18 +611,40 @@ export function ConstructorPage() {
                         />
                       </div>
                     </div>
-                    <div className="form-group">
-                      <label>Текст сообщения</label>
-                      <textarea
-                        value={sectionForm.body}
-                        onChange={(e) => {
-                          setSectionForm({ ...sectionForm, body: e.target.value });
-                          setSectionDirty(true);
-                        }}
-                        rows={10}
-                        required
-                      />
-                    </div>
+                    <MessengerTextEditor
+                      value={sectionForm.body}
+                      onChange={(body) => {
+                        setSectionForm({ ...sectionForm, body });
+                        setSectionDirty(true);
+                      }}
+                      parseMode={sectionForm.parseMode}
+                      onParseModeChange={(parseMode) => {
+                        setSectionForm({ ...sectionForm, parseMode });
+                        setSectionDirty(true);
+                      }}
+                      required
+                      previewExtra={
+                        <>
+                          {sectionForm.mediaType !== "none" && (
+                            <div className="tg-preview-media">
+                              {SECTION_MEDIA_LABELS[sectionForm.mediaType]}
+                              {sectionForm.mediaPath ? `: ${sectionForm.mediaPath}` : ""}
+                            </div>
+                          )}
+                          <div className="tg-preview-keyboard">
+                            {keyboardPreview.map(({ row, buttons }) => (
+                              <div key={row} className="tg-preview-row">
+                                {buttons.map((button) => (
+                                  <span key={button._id} className="tg-preview-btn">
+                                    {button.text}
+                                  </span>
+                                ))}
+                              </div>
+                            ))}
+                          </div>
+                        </>
+                      }
+                    />
                     <div className="form-row">
                       <div className="form-group">
                         <label>Медиа после текста</label>
@@ -666,32 +689,6 @@ export function ConstructorPage() {
                           }
                         />
                       )}
-                    </div>
-                    <div className="constructor-preview-row">
-                      <div className="constructor-preview card">
-                        <h4>Предпросмотр Telegram</h4>
-                        <div
-                          className="tg-preview-bubble"
-                          dangerouslySetInnerHTML={{ __html: sectionForm.body }}
-                        />
-                        {sectionForm.mediaType !== "none" && (
-                          <div className="tg-preview-media">
-                            {SECTION_MEDIA_LABELS[sectionForm.mediaType]}
-                            {sectionForm.mediaPath ? `: ${sectionForm.mediaPath}` : ""}
-                          </div>
-                        )}
-                        <div className="tg-preview-keyboard">
-                          {keyboardPreview.map(({ row, buttons }) => (
-                            <div key={row} className="tg-preview-row">
-                              {buttons.map((button) => (
-                                <span key={button._id} className="tg-preview-btn">
-                                  {button.text}
-                                </span>
-                              ))}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
                     </div>
                     {sectionDirty && (
                       <div className="constructor-save-bar">
@@ -844,15 +841,17 @@ export function ConstructorPage() {
                       <option value="system">Системный</option>
                     </select>
                   </div>
-                  <div className="form-group">
-                    <label>Текст</label>
-                    <textarea
-                      value={sectionForm.body}
-                      onChange={(e) => setSectionForm({ ...sectionForm, body: e.target.value })}
-                      rows={8}
-                      required
-                    />
-                  </div>
+                  <MessengerTextEditor
+                    value={sectionForm.body}
+                    onChange={(body) => setSectionForm({ ...sectionForm, body })}
+                    parseMode={sectionForm.parseMode}
+                    onParseModeChange={(parseMode) =>
+                      setSectionForm({ ...sectionForm, parseMode })
+                    }
+                    label="Текст"
+                    minRows={8}
+                    required
+                  />
                 </div>
                 <div className="modal-footer">
                   <button type="button" className="btn" onClick={() => setShowSectionModal(false)}>
