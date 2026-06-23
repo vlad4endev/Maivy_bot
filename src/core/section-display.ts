@@ -78,14 +78,6 @@ export function buildSectionDisplayActions(input: SectionDisplayInput): BotActio
     ];
   }
 
-  const actions: BotAction[] = [
-    {
-      type: "send_text",
-      text: input.text,
-      parseMode,
-    },
-  ];
-
   if (!hasMedia) {
     if (keyboard?.length) {
       return [
@@ -97,15 +89,31 @@ export function buildSectionDisplayActions(input: SectionDisplayInput): BotActio
         },
       ];
     }
-    return actions;
+
+    return [
+      {
+        type: "send_text",
+        text: input.text,
+        parseMode,
+      },
+    ];
   }
+
+  // Keep inline buttons on the text message so callbacks stay editable in Telegram.
+  const actions: BotAction[] = [
+    {
+      type: "send_text",
+      text: input.text,
+      keyboard,
+      parseMode,
+    },
+  ];
 
   switch (mediaType) {
     case "image":
       actions.push({
         type: "send_photo",
         source: resolvedMediaPath!,
-        keyboard,
         parseMode,
       });
       break;
@@ -113,14 +121,12 @@ export function buildSectionDisplayActions(input: SectionDisplayInput): BotActio
       actions.push({
         type: "send_video",
         source: resolvedMediaPath!,
-        keyboard,
       });
       break;
     case "video_note":
       actions.push({
         type: "send_video_note",
         source: resolvedMediaPath!,
-        keyboard,
       });
       break;
   }

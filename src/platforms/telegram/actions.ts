@@ -120,8 +120,11 @@ export async function executeTelegramCallbackActions(
     actions.find((action) => action.type === "answer_callback")?.text,
   );
 
-  const chatId = ctx.chat?.id;
-  if (!chatId) {
+  const chatId =
+    callbackQuery.message?.chat.id ??
+    ctx.chat?.id;
+  if (chatId === undefined) {
+    console.warn("Telegram: callback без chat id, payload:", callbackQuery.data);
     return;
   }
 

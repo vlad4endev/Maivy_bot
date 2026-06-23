@@ -135,7 +135,12 @@ function registerTelegramHandlers(
       );
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      console.error("Telegram: ошибка callback:", payload, message);
+      console.error(
+        "Telegram: ошибка callback:",
+        payload,
+        message,
+        error instanceof Error ? error.stack : "",
+      );
       try {
         await ctx.answerCallbackQuery("Не удалось выполнить действие");
       } catch {
