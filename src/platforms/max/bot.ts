@@ -182,7 +182,12 @@ async function executeMaxActions(
   config: AppContentConfig,
 ): Promise<void> {
   for (const action of actions) {
-    await executeMaxAction(ctx, action, config);
+    try {
+      await executeMaxAction(ctx, action, config);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error(`MAX: не удалось выполнить ${action.type}:`, message);
+    }
   }
 }
 
@@ -191,42 +196,111 @@ async function executeMaxCallbackActions(
   actions: BotAction[],
   config: AppContentConfig,
 ): Promise<void> {
-  const callbackId = ctx.callback?.callback_id;
-  if (callbackId) {
-    const notification = actions.find((action) => action.type === "answer_callback")
-      ?.text;
-    await ctx.answerOnCallback({ notification: notification ?? null });
-  }
-
   const otherActions = actions.filter((action) => action.type !== "answer_callback");
+  const answerResult = await acknowledgeMaxCallback(ctx, actions);
 
   for (const action of otherActions) {
-    if (action.type === "edit_text" && ctx.messageId) {
-      try {
-        await ctx.editMessage({
-          text: action.text,
-          format: action.parseMode === "HTML" ? "html" : "markdown",
-          attachments: buildMaxKeyboard(action.keyboard)
-            ? [buildMaxKeyboard(action.keyboard)!]
-            : null,
-        });
-      } catch {
-        await executeMaxAction(
-          ctx,
-          {
-            type: "send_text",
-            text: action.text,
-            parseMode: action.parseMode,
-            keyboard: action.keyboard,
-          },
-          config,
-        );
-      }
+    if (
+      answerResult.answeredWithMessage &&
+      answerResult.messageAction === action
+    ) {
       continue;
     }
 
-    await executeMaxAction(ctx, action, config);
+    try {
+      if (action.type === "edit_text" && ctx.messageId) {
+        try {
+          await ctx.editMessage({
+            text: action.text,
+            format: action.parseMode === "HTML" ? "html" : "markdown",
+            attachments: buildMaxKeyboard(action.keyboard)
+              ? [buildMaxKeyboard(action.keyboard)!]
+              : null,
+          });
+        } catch {
+          await executeMaxAction(
+            ctx,
+            {
+              type: "send_text",
+              text: action.text,
+              parseMode: action.parseMode,
+              keyboard: action.keyboard,
+            },
+            config,
+          );
+        }
+        continue;
+      }
+
+      await executeMaxAction(ctx, action, config);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error(`MAX: не удалось выполнить ${action.type}:`, message);
+    }
   }
+}
+
+type MaxCallbackMessageAction = Extract<
+  BotAction,
+  { type: "send_text" | "edit_text" }
+>;
+
+async function acknowledgeMaxCallback(
+  ctx: Context,
+  actions: BotAction[],
+): Promise<{
+  answeredWithMessage: boolean;
+  messageAction?: MaxCallbackMessageAction;
+}> {
+  const callbackId = ctx.callback?.callback_id;
+  if (!callbackId) {
+    return { answeredWithMessage: false };
+  }
+
+  const notification = actions.find((action) => action.type === "answer_callback")
+    ?.text;
+  if (notification) {
+    await ctx.answerOnCallback({ notification });
+    return { answeredWithMessage: false };
+  }
+
+  const editAction = actions.find(
+    (action): action is Extract<BotAction, { type: "edit_text" }> =>
+      action.type === "edit_text",
+  );
+  if (editAction) {
+    await ctx.answerOnCallback({
+      message: buildMaxCallbackMessage(editAction),
+    });
+    return { answeredWithMessage: true, messageAction: editAction };
+  }
+
+  const sendTextAction = actions.find(
+    (action): action is Extract<BotAction, { type: "send_text" }> =>
+      action.type === "send_text",
+  );
+  if (sendTextAction) {
+    await ctx.answerOnCallback({
+      message: buildMaxCallbackMessage(sendTextAction),
+    });
+    return { answeredWithMessage: true, messageAction: sendTextAction };
+  }
+
+  await ctx.answerOnCallback({ notification: " " });
+  return { answeredWithMessage: false };
+}
+
+function buildMaxCallbackMessage(action: MaxCallbackMessageAction): {
+  text: string;
+  format: "html" | "markdown";
+  attachments?: MaxAttachment[];
+} {
+  const keyboard = buildMaxKeyboard(action.keyboard);
+  return {
+    text: action.text,
+    format: action.parseMode === "HTML" ? "html" : "markdown",
+    attachments: keyboard ? [keyboard] : undefined,
+  };
 }
 
 async function executeMaxAction(

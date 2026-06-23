@@ -108,11 +108,36 @@ fi
 
 echo ""
 echo "--- Webhook (с сервера) ---"
-if curl -fsS "https://bot.maivy.ru/telegram/webhook" >/dev/null 2>&1; then
-  echo "✓ GET https://bot.maivy.ru/telegram/webhook отвечает"
+LOCAL_WEBHOOK_PORT="$("${COMPOSE[@]}" exec -T bot printenv WEBHOOK_PORT 2>/dev/null | tr -d '\r' || true)"
+LOCAL_WEBHOOK_PORT="${LOCAL_WEBHOOK_PORT:-3001}"
+LOCAL_WEBHOOK_URL="http://127.0.0.1:${LOCAL_WEBHOOK_PORT}/telegram/webhook"
+
+if curl -fsS "$LOCAL_WEBHOOK_URL" >/dev/null 2>&1; then
+  echo "✓ GET $LOCAL_WEBHOOK_URL → бот отвечает локально"
 else
-  echo "✗ GET https://bot.maivy.ru/telegram/webhook недоступен"
-  echo "  Проверьте nginx: proxy_pass на порт WEBHOOK_PORT (обычно 3001)"
+  echo "✗ GET $LOCAL_WEBHOOK_URL — бот не слушает на хосте"
+  echo "  Проверьте ports в docker compose: ${WEBHOOK_PORT:-3001}:${LOCAL_WEBHOOK_PORT}"
+fi
+
+PUBLIC_WEBHOOK_URL="${PUBLIC_TELEGRAM_WEBHOOK_URL:-https://bot.maivy.ru/telegram/webhook}"
+PUBLIC_BODY="$(curl -fsS "$PUBLIC_WEBHOOK_URL" 2>/dev/null || true)"
+if [[ "$PUBLIC_BODY" == *"Telegram webhook OK"* ]]; then
+  echo "✓ GET $PUBLIC_WEBHOOK_URL → OK"
+elif [[ "$PUBLIC_BODY" == *"502 Bad Gateway"* ]] || curl -fsS "$PUBLIC_WEBHOOK_URL" 2>&1 | grep -q "502"; then
+  echo "✗ GET $PUBLIC_WEBHOOK_URL → 502 Bad Gateway"
+  echo "  Бот на хосте работает, но nginx не может достучаться до upstream."
+  echo "  Частые причины:"
+  echo "    • proxy_pass на неверный порт (нужен :${LOCAL_WEBHOOK_PORT}, не 3000)"
+  echo "    • nginx в Docker — 127.0.0.1 это контейнер nginx, не хост"
+  echo "      proxy_pass http://172.17.0.1:${LOCAL_WEBHOOK_PORT};"
+  echo "      или: docker network connect <compose_network> nginx-proxy"
+  echo "           proxy_pass http://maivy-bot:${LOCAL_WEBHOOK_PORT};"
+  echo "  Найти конфиг: docker exec nginx-proxy grep -r bot.maivy /etc/nginx/"
+  echo "  Перезагрузка: docker exec nginx-proxy nginx -s reload"
+  echo "  (systemctl nginx на хосте не используется, если nginx в Docker)"
+else
+  echo "✗ GET $PUBLIC_WEBHOOK_URL недоступен (DNS, SSL или nginx не настроен)"
+  echo "  Проверьте nginx: proxy_pass http://127.0.0.1:${LOCAL_WEBHOOK_PORT};"
 fi
 if [[ -n "${TELEGRAM_WEBHOOK_SECRET:-}" ]] || "${COMPOSE[@]}" exec -T bot printenv TELEGRAM_WEBHOOK_SECRET >/dev/null 2>&1; then
   echo "ℹ TELEGRAM_WEBHOOK_SECRET задан — nginx должен проксировать заголовок:"

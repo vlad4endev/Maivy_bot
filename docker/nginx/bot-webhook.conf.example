@@ -5,6 +5,25 @@
 #   nginx -t && systemctl reload nginx
 #
 # WEBHOOK_PORT в .env / docker-compose.override.yml — обычно 3001.
+#
+# nginx на ХОСТЕ (systemd): proxy_pass http://127.0.0.1:3001;
+#
+# nginx в DOCKER (контейнер nginx-proxy и т.п.):
+#   127.0.0.1 внутри контейнера — НЕ хост! curl с хоста на :3001 работает,
+#   а https://bot.maivy.ru даёт 502, пока upstream неверный.
+#
+# Вариант A — gateway хоста (чаще всего):
+#   proxy_pass http://172.17.0.1:3001;
+#
+# Вариант B — та же docker-сеть, что и maivy-bot:
+#   docker network connect app_default nginx-proxy
+#   proxy_pass http://maivy-bot:3001;
+#
+# Вариант C — host.docker.internal (добавьте в nginx-proxy):
+#   extra_hosts: ["host.docker.internal:host-gateway"]
+#   proxy_pass http://host.docker.internal:3001;
+#
+# Найти конфиг: docker exec nginx-proxy grep -r bot.maivy /etc/nginx/
 
 server {
     listen 80;
