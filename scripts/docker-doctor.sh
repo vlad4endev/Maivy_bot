@@ -14,6 +14,12 @@ echo "Maivy Bot — диагностика (Docker)"
 echo "Каталог: $ROOT"
 echo ""
 
+if [[ ! -f scripts/docker-doctor.sh ]] || [[ ! -f scripts/check-tokens.mjs ]]; then
+  echo "✗ Скрипты диагностики не найдены — обновите код:"
+  echo "  cd $ROOT && git pull"
+  exit 1
+fi
+
 if ! command -v docker >/dev/null 2>&1; then
   echo "✗ Docker не установлен"
   exit 1
@@ -27,19 +33,33 @@ echo "--- Логи бота (последние 40 строк) ---"
 "${COMPOSE[@]}" logs bot --tail 40 2>&1 || echo "(контейнер bot ещё не запускался)"
 echo ""
 
-echo "--- Токены в Convex ---"
-if "${COMPOSE[@]}" ps --status running --services 2>/dev/null | grep -qx bot; then
-  if "${COMPOSE[@]}" exec -T bot test -f scripts/check-tokens.mjs 2>/dev/null; then
-    "${COMPOSE[@]}" exec -T bot node scripts/check-tokens.mjs || true
+run_in_bot() {
+  local script="$1"
+  if "${COMPOSE[@]}" ps --status running --services 2>/dev/null | grep -qx bot; then
+    "${COMPOSE[@]}" exec -T bot test -f "$script"
   else
-    echo "ℹ Обновите образ бота (git pull && docker compose up -d --build bot)"
-    echo "  Затем снова: ./scripts/docker-doctor.sh"
-    echo ""
-    echo "  Или вручную (docker compose подставит .env сам, source .env не нужен):"
-    echo '  docker compose run --rm --no-deps --entrypoint sh convex-deploy -c '"'"'npx convex run botApi:getBotContent "{\"secret\":\"$BOT_API_SECRET\",\"botSlug\":\"maivy\"}"'"'"''
+    return 1
   fi
+}
+
+echo "--- Токены в Convex ---"
+if run_in_bot scripts/check-tokens.mjs; then
+  "${COMPOSE[@]}" exec -T bot node scripts/check-tokens.mjs || true
 else
-  echo "✗ Контейнер bot не запущен — сначала: docker compose up -d bot"
+  echo "ℹ Обновите образ бота:"
+  echo "  git pull && docker compose up -d --build bot"
+  echo "  ./scripts/docker-doctor.sh"
+fi
+
+echo ""
+echo "--- Кнопки и переходы ---"
+if run_in_bot scripts/check-keyboards.mjs; then
+  "${COMPOSE[@]}" exec -T bot node scripts/check-keyboards.mjs || true
+elif [[ -f scripts/check-keyboards.mjs ]]; then
+  echo "ℹ check-keyboards есть в репозитории, но не в контейнере — пересоберите bot:"
+  echo "  git pull && docker compose up -d --build bot"
+else
+  echo "ℹ git pull — скрипт check-keyboards появится после обновления"
 fi
 
 echo ""
