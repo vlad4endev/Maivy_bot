@@ -1,5 +1,8 @@
 # Только бот — если Convex уже в облаке (convex.cloud)
 # docker compose -f docker-compose.cloud.yml up -d --build
+#
+# Self-hosted (рядом maivy-convex): НЕ используйте этот файл!
+#   docker compose up -d --build bot
 
 services:
   bot:
@@ -11,6 +14,17 @@ services:
     restart: unless-stopped
     env_file:
       - .env
+    environment:
+      CONVEX_URL: ${CONVEX_URL:?CONVEX_URL required in .env}
+      BOT_API_SECRET: ${BOT_API_SECRET:?BOT_API_SECRET required in .env}
+      BOT_SLUG: ${BOT_SLUG:-maivy}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      MAX_BOT_TOKEN: ${MAX_BOT_TOKEN:-}
+      MAX_WEBHOOK_URL: ${MAX_WEBHOOK_URL:-}
+      MAX_WEBHOOK_SECRET: ${MAX_WEBHOOK_SECRET:-}
+      TELEGRAM_WEBHOOK_URL: ${TELEGRAM_WEBHOOK_URL:-}
+      TELEGRAM_WEBHOOK_SECRET: ${TELEGRAM_WEBHOOK_SECRET:-}
+      WEBHOOK_PORT: ${WEBHOOK_PORT:-3000}
     ports:
       - "${WEBHOOK_PORT:-3000}:${WEBHOOK_PORT:-3000}"
     volumes:

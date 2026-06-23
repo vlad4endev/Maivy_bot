@@ -70,14 +70,18 @@ async function applyRuntimeWithRetry(botSlug: string): Promise<boolean> {
 async function main(): Promise<void> {
   const bootstrap = loadBootstrapConfig();
 
+  if (!bootstrap.convexUrl || !bootstrap.botApiSecret) {
+    throw new Error(
+      "Не заданы CONVEX_URL и/или BOT_API_SECRET в окружении контейнера. " +
+        "Self-hosted: используйте docker compose up -d --build bot (файл docker-compose.yml, не cloud.yml). " +
+        "Проверьте .env на сервере: BOT_API_SECRET=...",
+    );
+  }
+
   const loaded = await applyRuntimeWithRetry(bootstrap.botSlug);
 
   if (loaded) {
     console.log(`Конфигурация загружена из админ-панели (бот: ${bootstrap.botSlug})`);
-  } else if (!bootstrap.convexUrl || !bootstrap.botApiSecret) {
-    throw new Error(
-      "Настройте CONVEX_URL и BOT_API_SECRET в .env, затем создайте бота в админ-панели → Настройки",
-    );
   } else {
     throw new Error(
       `Бот "${bootstrap.botSlug}" не найден или отключён. Создайте его в админ-панели.`,

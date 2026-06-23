@@ -6,7 +6,11 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
 COMPOSE=(docker compose)
-if [[ -f docker-compose.cloud.yml ]] && [[ ! -f docker-compose.yml ]]; then
+if docker ps --format '{{.Names}}' 2>/dev/null | grep -qx maivy-convex; then
+  if [[ -f docker-compose.yml ]]; then
+    COMPOSE=(docker compose -f docker-compose.yml)
+  fi
+elif [[ -f docker-compose.cloud.yml ]] && [[ ! -f docker-compose.yml ]]; then
   COMPOSE=(docker compose -f docker-compose.cloud.yml)
 fi
 

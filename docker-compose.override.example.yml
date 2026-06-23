@@ -8,5 +8,10 @@
 #       - "3001:3001"
 #     environment:
 #       WEBHOOK_PORT: "3001"
+#       TELEGRAM_WEBHOOK_URL: "https://your-domain.com/telegram/webhook"
+#
+# Обязательно в .env на сервере (не коммитить):
+#   BOT_API_SECRET=...
+#   BOT_SLUG=maivy
 
 services: {}
