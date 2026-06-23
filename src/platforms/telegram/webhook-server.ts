@@ -27,7 +27,15 @@ export async function registerTelegramWebhook(
       return;
     }
 
-    await callback(req, res);
+    try {
+      await callback(req, res);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error("Telegram webhook: ошибка обработки update:", message);
+      if (!res.headersSent) {
+        res.writeHead(500).end();
+      }
+    }
   });
 
   await ensureWebhookServer(delivery.webhookPort);

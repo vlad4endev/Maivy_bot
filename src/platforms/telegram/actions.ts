@@ -2,13 +2,69 @@ import { existsSync } from "node:fs";
 import { InlineKeyboard, InputFile, type Api, type Context } from "grammy";
 import type { BotAction, Keyboard } from "../../core/actions.js";
 import type { AppContentConfig } from "../../config.js";
-import { isHttpMediaSource } from "../../lib/remote-media.js";
+import { downloadToTempFile, isHttpMediaSource } from "../../lib/remote-media.js";
 
-function createTelegramMediaInput(source: string): InputFile {
-  if (isHttpMediaSource(source)) {
-    return new InputFile({ url: source });
+async function sendTelegramText(
+  api: Api,
+  chatId: number,
+  text: string,
+  options: {
+    parseMode?: "HTML" | "Markdown";
+    reply_markup?: InlineKeyboard;
+  },
+): Promise<void> {
+  try {
+    await api.sendMessage(chatId, text, {
+      parse_mode: options.parseMode,
+      reply_markup: options.reply_markup,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (
+      options.parseMode &&
+      (message.includes("can't parse entities") || message.includes("parse"))
+    ) {
+      console.warn("Telegram: HTML/Markdown ошибка, отправка без разметки");
+      await api.sendMessage(chatId, text, {
+        reply_markup: options.reply_markup,
+      });
+      return;
+    }
+    throw error;
   }
-  return new InputFile(source);
+}
+
+async function resolveTelegramMediaInput(
+  source: string,
+): Promise<InputFile | undefined> {
+  if (isHttpMediaSource(source)) {
+    try {
+      const ext = source.includes(".mp4") || source.includes("video") ? ".mp4" : ".jpg";
+      const localPath = await downloadToTempFile(source, ext);
+      return new InputFile(localPath);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.warn("Telegram: не удалось скачать медиа:", message);
+      return undefined;
+    }
+  }
+
+  if (existsSync(source)) {
+    return new InputFile(source);
+  }
+
+  return undefined;
+}
+
+async function resolveTelegramVideoSource(
+  source: string,
+  config: AppContentConfig,
+): Promise<InputFile | string | undefined> {
+  if (config.telegramVideoNoteFileId) {
+    return config.telegramVideoNoteFileId;
+  }
+
+  return await resolveTelegramMediaInput(source);
 }
 
 export function buildTelegramKeyboard(
@@ -42,7 +98,12 @@ export async function executeTelegramActions(
   config: AppContentConfig,
 ): Promise<void> {
   for (const action of actions) {
-    await executeTelegramAction(api, chatId, action, config);
+    try {
+      await executeTelegramAction(api, chatId, action, config);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error(`Telegram: не удалось выполнить ${action.type}:`, message);
+    }
   }
 }
 
@@ -58,24 +119,34 @@ async function executeTelegramAction(
 
   switch (action.type) {
     case "send_text":
-      await api.sendMessage(chatId, action.text, {
-        parse_mode: action.parseMode,
+      await sendTelegramText(api, chatId, action.text, {
+        parseMode: action.parseMode,
         reply_markup: keyboard,
       });
       return;
 
-    case "send_photo":
-      await api.sendPhoto(chatId, createTelegramMediaInput(action.source), {
+    case "send_photo": {
+      const photo = await resolveTelegramMediaInput(action.source);
+      if (!photo) {
+        await sendTelegramText(api, chatId, action.caption ?? "Maivy", {
+          parseMode: action.parseMode,
+          reply_markup: keyboard,
+        });
+        return;
+      }
+
+      await api.sendPhoto(chatId, photo, {
         caption: action.caption,
         parse_mode: action.parseMode,
         reply_markup: keyboard,
       });
       return;
+    }
 
     case "send_video_note": {
-      const videoSource = resolveTelegramVideoSource(action.source, config);
+      const videoSource = await resolveTelegramVideoSource(action.source, config);
       if (!videoSource) {
-        await api.sendMessage(chatId, "Выберите действие:", {
+        await sendTelegramText(api, chatId, "Выберите действие:", {
           reply_markup: keyboard,
         });
         return;
@@ -87,12 +158,21 @@ async function executeTelegramAction(
       return;
     }
 
-    case "send_video":
-      await api.sendVideo(chatId, createTelegramMediaInput(action.source), {
+    case "send_video": {
+      const video = await resolveTelegramMediaInput(action.source);
+      if (!video) {
+        await sendTelegramText(api, chatId, action.caption ?? "Maivy", {
+          reply_markup: keyboard,
+        });
+        return;
+      }
+
+      await api.sendVideo(chatId, video, {
         caption: action.caption,
         reply_markup: keyboard,
       });
       return;
+    }
 
     case "edit_text":
       await api.editMessageText(chatId, Number(action.messageId), action.text, {
@@ -156,23 +236,4 @@ export async function executeTelegramCallbackActions(
 
     await executeTelegramAction(ctx.api, chatId, action, config);
   }
-}
-
-function resolveTelegramVideoSource(
-  source: string,
-  config: AppContentConfig,
-): InputFile | string | undefined {
-  if (config.telegramVideoNoteFileId) {
-    return config.telegramVideoNoteFileId;
-  }
-
-  if (isHttpMediaSource(source)) {
-    return createTelegramMediaInput(source);
-  }
-
-  if (existsSync(source)) {
-    return new InputFile(source);
-  }
-
-  return undefined;
 }

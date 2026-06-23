@@ -107,4 +107,22 @@ else
 fi
 
 echo ""
+echo "--- Webhook (с сервера) ---"
+if curl -fsS "https://bot.maivy.ru/telegram/webhook" >/dev/null 2>&1; then
+  echo "✓ GET https://bot.maivy.ru/telegram/webhook отвечает"
+else
+  echo "✗ GET https://bot.maivy.ru/telegram/webhook недоступен"
+  echo "  Проверьте nginx: proxy_pass на порт WEBHOOK_PORT (обычно 3001)"
+fi
+if [[ -n "${TELEGRAM_WEBHOOK_SECRET:-}" ]] || "${COMPOSE[@]}" exec -T bot printenv TELEGRAM_WEBHOOK_SECRET >/dev/null 2>&1; then
+  echo "ℹ TELEGRAM_WEBHOOK_SECRET задан — nginx должен проксировать заголовок:"
+  echo "  proxy_set_header X-Telegram-Bot-Api-Secret-Token \$http_x_telegram_bot_api_secret_token;"
+fi
+echo ""
+
+echo "Если /start не отвечает:"
+echo "  1. docker compose logs bot -f   (отправьте /start и смотрите логи)"
+echo "  2. Должно появиться: Telegram: /start обработан для chat ..."
+echo "  3. Если логов нет — проблема nginx/webhook secret"
+echo ""
 echo "Если токенов нет: админка → Настройки → Платформы → сохранить → docker compose up -d --build bot"

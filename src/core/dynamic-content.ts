@@ -53,8 +53,16 @@ export function getWelcomeText(
   const section = getSectionBySlug(content, "welcome");
   if (!section) return null;
 
-  const greeting = firstName ? `${firstName}, доб` : "Доб";
+  const safeName = firstName ? escapeHtml(firstName) : undefined;
+  const greeting = safeName ? `${safeName}, доб` : "Доб";
   return section.body.replace(/^Добро пожаловать/, `${greeting}ро пожаловать`);
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
 }
 
 export function getSectionText(

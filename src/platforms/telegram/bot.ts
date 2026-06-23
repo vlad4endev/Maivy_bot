@@ -102,6 +102,11 @@ function registerTelegramHandlers(
         handlers.handleStart(ctx.from?.first_name),
         config,
       );
+      console.log(
+        "Telegram: /start обработан для chat",
+        ctx.chat.id,
+        ctx.from?.username ? `@${ctx.from.username}` : "",
+      );
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       console.error("Telegram: ошибка /start:", message);
