@@ -163,6 +163,7 @@ export const CALLBACK_LABELS: Record<string, string> = {
   about_more: "Узнать больше (первый шаг)",
   about_next: "Следующий шаг (шаблон)",
   demo: "Демо",
+  ai_solutions: "ИИ-решения",
   try: "Попробовать",
   impl: "Внедрение",
   menu: "В главное меню",
@@ -178,6 +179,7 @@ export const SPECIAL_ACTIONS = [
 export const LEGACY_ACTION_SECTION_SLUGS: Record<string, string> = {
   about_more: "about_1",
   demo: "demo",
+  ai_solutions: "ai_solutions",
   try: "try",
   impl: "impl",
   menu: "menu",

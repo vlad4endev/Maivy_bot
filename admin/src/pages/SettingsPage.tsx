@@ -26,6 +26,8 @@ interface SettingsForm {
   privacyPolicyUrl: string;
   loomVideoUrl: string;
   grosterUrl: string;
+  aiConsultantUrl: string;
+  aiCatalogUrl: string;
   contactUsername: string;
   welcomeImagePath: string;
   welcomeVideoPath: string;
@@ -46,6 +48,8 @@ const ENV_FIELDS = [
   { key: "PRIVACY_POLICY_URL", label: "Privacy Policy URL", tab: "content" },
   { key: "LOOM_VIDEO_URL", label: "Loom Video URL", tab: "content" },
   { key: "GROSTER_URL", label: "Groster URL", tab: "content" },
+  { key: "AI_CONSULTANT_URL", label: "ИИ-консультант URL", tab: "content" },
+  { key: "AI_CATALOG_URL", label: "ИИ-каталог URL", tab: "content" },
   { key: "CONTACT_USERNAME", label: "Contact Username", tab: "content" },
   { key: "WELCOME_IMAGE_PATH", label: "Welcome Image", tab: "media" },
   { key: "WELCOME_VIDEO_PATH", label: "Welcome Video", tab: "media" },
@@ -68,6 +72,8 @@ function botToForm(bot: {
     privacyPolicyUrl: string;
     loomVideoUrl: string;
     grosterUrl: string;
+    aiConsultantUrl?: string;
+    aiCatalogUrl?: string;
     contactUsername: string;
     welcomeImagePath?: string;
     welcomeVideoPath?: string;
@@ -89,6 +95,8 @@ function botToForm(bot: {
     privacyPolicyUrl: bot.settings.privacyPolicyUrl,
     loomVideoUrl: bot.settings.loomVideoUrl,
     grosterUrl: bot.settings.grosterUrl,
+    aiConsultantUrl: bot.settings.aiConsultantUrl ?? "https://ourgold.maivy.ru",
+    aiCatalogUrl: bot.settings.aiCatalogUrl ?? "https://catalog.maivy.ru",
     contactUsername: bot.settings.contactUsername,
     welcomeImagePath: bot.settings.welcomeImagePath ?? "assets/welcome.jpg",
     welcomeVideoPath: bot.settings.welcomeVideoPath ?? "assets/welcome-video.mp4",
@@ -108,11 +116,14 @@ export function SettingsPage() {
   );
 
   const updateBot = useMutation(api.bots.update);
+  const ensureAiSolutions = useMutation(api.aiSolutions.ensureAiSolutionsBlock);
   const [tab, setTab] = useState<Tab>("platforms");
   const [form, setForm] = useState<SettingsForm | null>(null);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [aiMigrationMessage, setAiMigrationMessage] = useState("");
+  const [aiMigrating, setAiMigrating] = useState(false);
 
   useEffect(() => {
     if (bot) {
@@ -198,6 +209,8 @@ export function SettingsPage() {
           privacyPolicyUrl: normalizeUrl(form.privacyPolicyUrl),
           loomVideoUrl: normalizeUrl(form.loomVideoUrl),
           grosterUrl: normalizeUrl(form.grosterUrl),
+          aiConsultantUrl: normalizeUrl(form.aiConsultantUrl),
+          aiCatalogUrl: normalizeUrl(form.aiCatalogUrl),
           contactUsername,
           contactUrl,
           welcomeImagePath: form.welcomeImagePath || undefined,
@@ -210,6 +223,27 @@ export function SettingsPage() {
       setError(err instanceof Error ? err.message : "Ошибка сохранения");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleEnsureAiSolutions = async () => {
+    if (!token || !activeBotId) return;
+
+    setAiMigrating(true);
+    setAiMigrationMessage("");
+    setError("");
+
+    try {
+      const result = await ensureAiSolutions({ token, botId: activeBotId });
+      setAiMigrationMessage(
+        `Готово: разделов ${result.createdSections}, обновлено ${result.updatedSections}, кнопок ${result.createdButtons}` +
+          `${result.mainMenuUpdated ? ", пункт меню добавлен" : ""}` +
+          `${result.updatedSettings ? ", ссылки обновлены" : ""}.`,
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Не удалось добавить блок ИИ-решений");
+    } finally {
+      setAiMigrating(false);
     }
   };
 
@@ -493,21 +527,43 @@ export function SettingsPage() {
 
                   <div className="form-row">
                     <div className="form-group">
+                      <label htmlFor="grosterUrl">GROSTER_URL (умный поиск)</label>
+                      <input
+                        id="grosterUrl"
+                        type="url"
+                        value={form.grosterUrl}
+                        onChange={(e) => updateField("grosterUrl", e.target.value)}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor="aiConsultantUrl">AI_CONSULTANT_URL</label>
+                      <input
+                        id="aiConsultantUrl"
+                        type="url"
+                        value={form.aiConsultantUrl}
+                        onChange={(e) => updateField("aiConsultantUrl", e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="aiCatalogUrl">AI_CATALOG_URL (прототип ИИ-каталога)</label>
+                    <input
+                      id="aiCatalogUrl"
+                      type="url"
+                      value={form.aiCatalogUrl}
+                      onChange={(e) => updateField("aiCatalogUrl", e.target.value)}
+                    />
+                  </div>
+
+                  <div className="form-row">
+                    <div className="form-group">
                       <label htmlFor="loomVideoUrl">LOOM_VIDEO_URL</label>
                       <input
                         id="loomVideoUrl"
                         type="url"
                         value={form.loomVideoUrl}
                         onChange={(e) => updateField("loomVideoUrl", e.target.value)}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label htmlFor="grosterUrl">GROSTER_URL</label>
-                      <input
-                        id="grosterUrl"
-                        type="url"
-                        value={form.grosterUrl}
-                        onChange={(e) => updateField("grosterUrl", e.target.value)}
                       />
                     </div>
                   </div>
@@ -520,6 +576,24 @@ export function SettingsPage() {
                       onChange={(e) => updateField("contactUsername", e.target.value)}
                       placeholder="@daerit"
                     />
+                  </div>
+
+                  <div className="card" style={{ marginTop: 8, background: "rgba(16,185,129,0.06)", borderColor: "rgba(16,185,129,0.25)" }}>
+                    <p style={{ fontSize: "0.875rem", lineHeight: 1.6, marginBottom: 12 }}>
+                      Если бот был создан до появления блока «Что умеют наши ИИ-решения?», нажмите кнопку ниже —
+                      добавятся разделы, кнопки и пункт в главном меню. Повторный запуск обновит тексты разделов.
+                    </p>
+                    <button
+                      type="button"
+                      className="btn"
+                      disabled={aiMigrating}
+                      onClick={() => void handleEnsureAiSolutions()}
+                    >
+                      {aiMigrating ? "Добавляем..." : "Добавить блок ИИ-решений"}
+                    </button>
+                    {aiMigrationMessage && (
+                      <p style={{ marginTop: 12, fontSize: "0.875rem" }}>{aiMigrationMessage}</p>
+                    )}
                   </div>
                 </>
               )}

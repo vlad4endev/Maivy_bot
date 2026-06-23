@@ -81,6 +81,8 @@ export interface AppContentConfig {
   privacyPolicyUrl: string;
   loomVideoUrl: string;
   grosterUrl: string;
+  aiConsultantUrl?: string;
+  aiCatalogUrl?: string;
   contactUsername: string;
   contactUrl: string;
   welcomeImagePath?: string;
@@ -105,7 +107,13 @@ export function getEnvFallbackContent(): AppContentConfig {
     loomVideoUrl:
       process.env.LOOM_VIDEO_URL?.trim() ??
       "https://www.loom.com/share/example",
-    grosterUrl: process.env.GROSTER_URL?.trim() ?? "https://groster.me/",
+    grosterUrl:
+      process.env.GROSTER_URL?.trim() ??
+      "https://moscow.groster-dev.vertical-tech.ru/search/",
+    aiConsultantUrl:
+      process.env.AI_CONSULTANT_URL?.trim() ?? "https://ourgold.maivy.ru",
+    aiCatalogUrl:
+      process.env.AI_CATALOG_URL?.trim() ?? "https://catalog.maivy.ru",
     contactUsername,
     contactUrl: buildContactUrl(contactUsername),
     welcomeImagePath: resolveAssetPath(

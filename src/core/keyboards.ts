@@ -5,6 +5,7 @@ export function mainMenuKeyboard(): Keyboard {
   return [
     [{ text: "Узнать больше о Maivy", action: Callback.ABOUT_MORE }],
     [{ text: "Посмотреть, как работает Maivy", action: Callback.DEMO }],
+    [{ text: "Что умеют наши ИИ-решения?", action: Callback.AI_SOLUTIONS }],
     [{ text: "Попробовать Maivy на практике", action: Callback.TRY }],
     [{ text: "Хочу внедрить Maivy", action: Callback.IMPL }],
   ];
@@ -44,5 +45,35 @@ export function implementKeyboard(contactUrl: string): Keyboard {
   return [
     [{ text: "✉️ Написать @daerit", url: contactUrl }],
     [{ text: "← В меню", action: Callback.MENU }],
+  ];
+}
+
+export function aiSolutionsKeyboard(): Keyboard {
+  return [
+    [{ text: "🔍 Умный поиск", action: "section:ai_smart_search" }],
+    [{ text: "🤖 ИИ-консультант (Mavi)", action: "section:ai_consultant" }],
+    [{ text: "🛍 ИИ-каталог", action: "section:ai_catalog" }],
+    [{ text: "← В меню", action: Callback.MENU }],
+  ];
+}
+
+export function aiSmartSearchKeyboard(grosterUrl: string): Keyboard {
+  return [
+    [{ text: "Попробовать умный поиск", url: grosterUrl }],
+    [{ text: "← К списку ИИ-решений", action: Callback.AI_SOLUTIONS }],
+  ];
+}
+
+export function aiConsultantKeyboard(aiConsultantUrl: string): Keyboard {
+  return [
+    [{ text: "Попробовать ИИ-консультанта", url: aiConsultantUrl }],
+    [{ text: "← К списку ИИ-решений", action: Callback.AI_SOLUTIONS }],
+  ];
+}
+
+export function aiCatalogKeyboard(aiCatalogUrl: string): Keyboard {
+  return [
+    [{ text: "Посмотреть прототип", url: aiCatalogUrl }],
+    [{ text: "← К списку ИИ-решений", action: Callback.AI_SOLUTIONS }],
   ];
 }

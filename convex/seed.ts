@@ -1,6 +1,14 @@
 import { v } from "convex/values";
 import { mutation } from "./_generated/server";
 import { requireAdminSession } from "./lib/auth";
+import {
+  AI_SOLUTIONS_BUTTONS,
+  AI_SOLUTIONS_SECTIONS,
+  DEFAULT_AI_CATALOG_URL,
+  DEFAULT_AI_CONSULTANT_URL,
+  DEFAULT_GROSTER_SEARCH_URL,
+  MAIN_MENU_AI_SOLUTIONS_BUTTON,
+} from "./lib/aiSolutions";
 
 const DEFAULT_ABOUT_STEPS = [
   {
@@ -123,7 +131,9 @@ export const seedDefaultBot = mutation({
           "Maivy — умный поиск и трансформация B2B-продаж. Находите товары за секунды, а не часы.",
         privacyPolicyUrl: "https://example.com/privacy-policy",
         loomVideoUrl: "https://www.loom.com/share/example",
-        grosterUrl: "https://groster.me/",
+        grosterUrl: DEFAULT_GROSTER_SEARCH_URL,
+        aiConsultantUrl: DEFAULT_AI_CONSULTANT_URL,
+        aiCatalogUrl: DEFAULT_AI_CATALOG_URL,
         contactUsername: "@daerit",
         contactUrl: "https://t.me/daerit",
         welcomeImagePath: "assets/welcome.jpg",
@@ -238,11 +248,27 @@ Maivy — платформа, которая меняет то, как бизн�
       updatedAt: now,
     });
 
+    for (const section of AI_SOLUTIONS_SECTIONS) {
+      await ctx.db.insert("sections", {
+        botId,
+        slug: section.slug,
+        title: section.title,
+        body: section.body,
+        order: section.order,
+        sectionType: "section",
+        keyboardId: section.keyboardId,
+        isPublished: true,
+        parseMode: "HTML",
+        updatedAt: now,
+      });
+    }
+
     const defaultButtons = [
       { keyboardId: "main_menu", row: 0, col: 0, text: "Узнать больше о Maivy", buttonType: "callback" as const, action: "about_more", targetSlug: "about_1", order: 0 },
       { keyboardId: "main_menu", row: 1, col: 0, text: "Посмотреть, как работает Maivy", buttonType: "callback" as const, action: "demo", targetSlug: "demo", order: 1 },
-      { keyboardId: "main_menu", row: 2, col: 0, text: "Попробовать Maivy на практике", buttonType: "callback" as const, action: "try", targetSlug: "try", order: 2 },
-      { keyboardId: "main_menu", row: 3, col: 0, text: "Хочу внедрить Maivy", buttonType: "callback" as const, action: "impl", targetSlug: "impl", order: 3 },
+      MAIN_MENU_AI_SOLUTIONS_BUTTON,
+      { keyboardId: "main_menu", row: 3, col: 0, text: "Попробовать Maivy на практике", buttonType: "callback" as const, action: "try", targetSlug: "try", order: 3 },
+      { keyboardId: "main_menu", row: 4, col: 0, text: "Хочу внедрить Maivy", buttonType: "callback" as const, action: "impl", targetSlug: "impl", order: 4 },
       { keyboardId: "about_step", row: 0, col: 0, text: "Далее →", buttonType: "callback" as const, action: "about_next", order: 0 },
       { keyboardId: "about_step", row: 1, col: 0, text: "← В меню", buttonType: "callback" as const, action: "menu", targetSlug: "menu", order: 1 },
       { keyboardId: "back_menu", row: 0, col: 0, text: "← В меню", buttonType: "callback" as const, action: "menu", targetSlug: "menu", order: 0 },
@@ -252,6 +278,7 @@ Maivy — платформа, которая меняет то, как бизн�
       { keyboardId: "try", row: 1, col: 0, text: "← В меню", buttonType: "callback" as const, action: "menu", targetSlug: "menu", order: 1 },
       { keyboardId: "impl", row: 0, col: 0, text: "✉️ Написать @daerit", buttonType: "url" as const, urlSource: "contactUrl" as const, order: 0 },
       { keyboardId: "impl", row: 1, col: 0, text: "← В меню", buttonType: "callback" as const, action: "menu", targetSlug: "menu", order: 1 },
+      ...AI_SOLUTIONS_BUTTONS,
     ];
 
     const seededSections = await ctx.db
@@ -278,7 +305,9 @@ Maivy — платформа, которая меняет то, как бизн�
         action:
           targetSectionId && "targetSlug" in btn && btn.targetSlug
             ? `section:${btn.targetSlug}`
-            : btn.action,
+            : "action" in btn
+              ? btn.action
+              : undefined,
         targetSectionId,
         urlSource: "urlSource" in btn ? btn.urlSource : undefined,
         order: btn.order,

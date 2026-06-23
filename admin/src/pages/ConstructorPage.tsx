@@ -20,7 +20,7 @@ import {
 type SectionType = "welcome" | "about_step" | "section" | "system";
 type SectionMediaType = "none" | "image" | "video" | "video_note";
 type ButtonType = "callback" | "url";
-type UrlSource = "loomVideoUrl" | "grosterUrl" | "contactUrl" | "";
+type UrlSource = "loomVideoUrl" | "grosterUrl" | "aiConsultantUrl" | "aiCatalogUrl" | "contactUrl" | "";
 
 interface SectionForm {
   slug: string;
@@ -977,6 +977,8 @@ export function ConstructorPage() {
                           <option value="">— не использовать —</option>
                           <option value="loomVideoUrl">Loom Video</option>
                           <option value="grosterUrl">Groster</option>
+                          <option value="aiConsultantUrl">ИИ-консультант</option>
+                          <option value="aiCatalogUrl">ИИ-каталог</option>
                           <option value="contactUrl">Контакт</option>
                         </select>
                       </div>

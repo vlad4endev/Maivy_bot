@@ -104,6 +104,8 @@ export async function loadBotRuntime(
       privacyPolicyUrl: data.settings.privacyPolicyUrl,
       loomVideoUrl: data.settings.loomVideoUrl,
       grosterUrl: data.settings.grosterUrl,
+      aiConsultantUrl: data.settings.aiConsultantUrl,
+      aiCatalogUrl: data.settings.aiCatalogUrl,
       contactUsername: data.settings.contactUsername,
       contactUrl: data.settings.contactUrl,
       welcomeImagePath:

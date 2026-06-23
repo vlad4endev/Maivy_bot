@@ -3,6 +3,7 @@ export const Callback = {
   aboutStep: (step: number) => `about_${step}`,
   aboutNext: (step: number) => `about_next_${step}`,
   DEMO: "demo",
+  AI_SOLUTIONS: "ai_solutions",
   TRY: "try",
   IMPL: "impl",
   MENU: "menu",

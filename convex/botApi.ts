@@ -3,6 +3,10 @@ import { mutation, query } from "./_generated/server";
 import { verifyBotApiSecret } from "./lib/auth";
 import { resolveMediaRef } from "./lib/mediaPaths";
 import { actionForTargetSection } from "./lib/sectionKeyboard";
+import {
+  DEFAULT_AI_CATALOG_URL,
+  DEFAULT_AI_CONSULTANT_URL,
+} from "./lib/aiSolutions";
 import { normalizeUrl } from "./lib/urls";
 import { platformValidator, sectionMediaTypeValidator } from "./lib/validators";
 
@@ -31,6 +35,8 @@ const botContentValidator = v.object({
     privacyPolicyUrl: v.string(),
     loomVideoUrl: v.string(),
     grosterUrl: v.string(),
+    aiConsultantUrl: v.optional(v.string()),
+    aiCatalogUrl: v.optional(v.string()),
     contactUsername: v.string(),
     contactUrl: v.string(),
     welcomeImagePath: v.optional(v.string()),
@@ -60,6 +66,8 @@ function resolveUrl(
   settings: {
     loomVideoUrl: string;
     grosterUrl: string;
+    aiConsultantUrl?: string;
+    aiCatalogUrl?: string;
     contactUrl: string;
   },
 ): string | undefined {
@@ -70,6 +78,10 @@ function resolveUrl(
       return normalizeUrl(settings.loomVideoUrl);
     case "grosterUrl":
       return normalizeUrl(settings.grosterUrl);
+    case "aiConsultantUrl":
+      return normalizeUrl(settings.aiConsultantUrl ?? DEFAULT_AI_CONSULTANT_URL);
+    case "aiCatalogUrl":
+      return normalizeUrl(settings.aiCatalogUrl ?? DEFAULT_AI_CATALOG_URL);
     case "contactUrl":
       return normalizeUrl(settings.contactUrl);
     default:

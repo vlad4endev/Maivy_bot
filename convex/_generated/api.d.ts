@@ -9,6 +9,7 @@
  */
 
 import type * as adminAuth from "../adminAuth.js";
+import type * as aiSolutions from "../aiSolutions.js";
 import type * as analytics from "../analytics.js";
 import type * as botApi from "../botApi.js";
 import type * as botUsers from "../botUsers.js";
@@ -16,6 +17,7 @@ import type * as bots from "../bots.js";
 import type * as buttons from "../buttons.js";
 import type * as constructor from "../constructor.js";
 import type * as events from "../events.js";
+import type * as lib_aiSolutions from "../lib/aiSolutions.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_mediaPaths from "../lib/mediaPaths.js";
 import type * as lib_sectionKeyboard from "../lib/sectionKeyboard.js";
@@ -33,6 +35,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   adminAuth: typeof adminAuth;
+  aiSolutions: typeof aiSolutions;
   analytics: typeof analytics;
   botApi: typeof botApi;
   botUsers: typeof botUsers;
@@ -40,6 +43,7 @@ declare const fullApi: ApiFromModules<{
   buttons: typeof buttons;
   constructor: typeof constructor;
   events: typeof events;
+  "lib/aiSolutions": typeof lib_aiSolutions;
   "lib/auth": typeof lib_auth;
   "lib/mediaPaths": typeof lib_mediaPaths;
   "lib/sectionKeyboard": typeof lib_sectionKeyboard;

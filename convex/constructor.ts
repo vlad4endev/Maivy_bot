@@ -19,6 +19,8 @@ const flowButtonValidator = v.object({
     v.union(
       v.literal("loomVideoUrl"),
       v.literal("grosterUrl"),
+      v.literal("aiConsultantUrl"),
+      v.literal("aiCatalogUrl"),
       v.literal("contactUrl"),
     ),
   ),

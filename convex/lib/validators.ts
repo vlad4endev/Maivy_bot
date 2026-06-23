@@ -10,6 +10,8 @@ export const botSettingsValidator = v.object({
   privacyPolicyUrl: v.string(),
   loomVideoUrl: v.string(),
   grosterUrl: v.string(),
+  aiConsultantUrl: v.optional(v.string()),
+  aiCatalogUrl: v.optional(v.string()),
   contactUsername: v.string(),
   contactUrl: v.string(),
   welcomeImagePath: v.optional(v.string()),
@@ -41,6 +43,8 @@ export const urlSourceValidator = v.optional(
   v.union(
     v.literal("loomVideoUrl"),
     v.literal("grosterUrl"),
+    v.literal("aiConsultantUrl"),
+    v.literal("aiCatalogUrl"),
     v.literal("contactUrl"),
   ),
 );

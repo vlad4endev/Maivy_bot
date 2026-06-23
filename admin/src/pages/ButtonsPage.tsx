@@ -9,7 +9,7 @@ import { PageHeader } from "../components/PageHeader";
 import { CALLBACK_LABELS, KEYBOARD_LABELS, normalizeUrl } from "../lib/utils";
 
 type ButtonType = "callback" | "url";
-type UrlSource = "loomVideoUrl" | "grosterUrl" | "contactUrl" | "";
+type UrlSource = "loomVideoUrl" | "grosterUrl" | "aiConsultantUrl" | "aiCatalogUrl" | "contactUrl" | "";
 
 interface ButtonForm {
   keyboardId: string;
@@ -343,6 +343,8 @@ export function ButtonsPage() {
                           <option value="">— не использовать —</option>
                           <option value="loomVideoUrl">Loom Video URL</option>
                           <option value="grosterUrl">Groster URL</option>
+                          <option value="aiConsultantUrl">ИИ-консультант URL</option>
+                          <option value="aiCatalogUrl">ИИ-каталог URL</option>
                           <option value="contactUrl">Contact URL</option>
                         </select>
                       </div>

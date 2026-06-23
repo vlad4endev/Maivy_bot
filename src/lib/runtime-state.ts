@@ -40,6 +40,8 @@ function getFallbackConfig(): AppContentConfig {
     privacyPolicyUrl: "",
     loomVideoUrl: "",
     grosterUrl: "",
+    aiConsultantUrl: "https://ourgold.maivy.ru",
+    aiCatalogUrl: "https://catalog.maivy.ru",
     contactUsername: "@daerit",
     contactUrl: "https://t.me/daerit",
   };

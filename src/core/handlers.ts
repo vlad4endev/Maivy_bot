@@ -16,6 +16,10 @@ import {
 } from "./dynamic-content.js";
 import {
   aboutStepKeyboard,
+  aiCatalogKeyboard,
+  aiConsultantKeyboard,
+  aiSmartSearchKeyboard,
+  aiSolutionsKeyboard,
   backToMenuKeyboard,
   demoKeyboard,
   implementKeyboard,
@@ -119,6 +123,9 @@ export function createBotHandlers() {
       case Callback.DEMO:
         return navigateToSection("demo", messageId);
 
+      case Callback.AI_SOLUTIONS:
+        return navigateToSection("ai_solutions", messageId);
+
       case Callback.TRY:
         return navigateToSection("try", messageId);
 
@@ -198,6 +205,22 @@ export function createBotHandlers() {
           ? mainMenuKeyboard
           : keyboardId === "demo"
             ? () => demoKeyboard(getEffectiveConfig().loomVideoUrl)
+            : keyboardId === "ai_solutions"
+              ? aiSolutionsKeyboard
+              : keyboardId === "ai_smart_search"
+                ? () => aiSmartSearchKeyboard(getEffectiveConfig().grosterUrl)
+                : keyboardId === "ai_consultant"
+                  ? () =>
+                      aiConsultantKeyboard(
+                        getEffectiveConfig().aiConsultantUrl ??
+                          "https://ourgold.maivy.ru",
+                      )
+                  : keyboardId === "ai_catalog"
+                    ? () =>
+                        aiCatalogKeyboard(
+                          getEffectiveConfig().aiCatalogUrl ??
+                            "https://catalog.maivy.ru",
+                        )
             : keyboardId === "try"
               ? () => tryKeyboard(getEffectiveConfig().grosterUrl)
               : keyboardId === "impl"
