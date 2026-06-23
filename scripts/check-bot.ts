@@ -92,7 +92,12 @@ async function main(): Promise<void> {
           );
           hasErrors = true;
         } else {
-          ok(`${platform.toUpperCase()} токен задан`);
+          const inDb =
+            platform === "telegram"
+              ? Boolean(runtime.telegramToken?.trim())
+              : Boolean(runtime.maxToken?.trim());
+          const source = inDb ? "база Convex" : `.env (${envKey})`;
+          ok(`${platform.toUpperCase()} токен задан (${source})`);
           runnablePlatforms += 1;
         }
       }

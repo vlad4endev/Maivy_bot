@@ -45,6 +45,12 @@ if [[ "$STASHED" -eq 1 ]]; then
   fi
 fi
 
+if [[ -f docker-compose.yml ]]; then
+  echo "→ Деплой Convex (self-hosted)..."
+  "${COMPOSE[@]}" up -d convex-backend
+  "${COMPOSE[@]}" run --rm convex-deploy
+fi
+
 echo "→ Пересборка bot (без кэша исходников)..."
 "${COMPOSE[@]}" build --no-cache bot
 "${COMPOSE[@]}" up -d bot

@@ -33,6 +33,13 @@ echo "--- Логи бота (последние 40 строк) ---"
 "${COMPOSE[@]}" logs bot --tail 40 2>&1 || echo "(контейнер bot ещё не запускался)"
 echo ""
 
+BOT_STATUS="$("${COMPOSE[@]}" ps bot --format '{{.State}}' 2>/dev/null | head -1 || true)"
+if [[ "$BOT_STATUS" == "restarting" ]] || [[ "$BOT_STATUS" == "exited" ]]; then
+  echo "⚠ Контейнер bot: $BOT_STATUS — частая причина: нет токенов Telegram/MAX."
+  echo "  Админка → Настройки → сохраните токены → docker compose up -d --build bot"
+  echo ""
+fi
+
 run_in_bot() {
   local script="$1"
   if "${COMPOSE[@]}" ps --status running --services 2>/dev/null | grep -qx bot; then

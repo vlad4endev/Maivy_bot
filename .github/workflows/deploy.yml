@@ -11,15 +11,33 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Check CONVEX_DEPLOY_KEY
+        id: deploy_key
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
+        run: |
+          if [ -z "${CONVEX_DEPLOY_KEY}" ]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::CONVEX_DEPLOY_KEY не задан в secrets репозитория."
+            echo "Convex и админка не обновятся автоматически."
+            echo "Добавьте ключ: GitHub → Settings → Secrets → CONVEX_DEPLOY_KEY"
+            echo "(Convex Dashboard → Settings → Deploy Key)"
+            exit 0
+          fi
+          echo "configured=true" >> "$GITHUB_OUTPUT"
+
       - uses: actions/setup-node@v4
+        if: steps.deploy_key.outputs.configured == 'true'
         with:
           node-version-file: .nvmrc
           cache: npm
 
       - name: Install dependencies
+        if: steps.deploy_key.outputs.configured == 'true'
         run: npm run install:all
 
       - name: Deploy Convex + admin
+        if: steps.deploy_key.outputs.configured == 'true'
         run: npm run deploy:convex
         env:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
