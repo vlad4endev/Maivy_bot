@@ -1,0 +1,12 @@
+# Скопируйте на сервер: cp docker-compose.override.example.yml docker-compose.override.yml
+# Файл в .gitignore — git pull не конфликтует с вашими настройками.
+#
+# Пример: другой порт webhook на сервере
+# services:
+#   bot:
+#     ports:
+#       - "3001:3001"
+#     environment:
+#       WEBHOOK_PORT: "3001"
+
+services: {}

@@ -5,6 +5,7 @@ admin/dist/
 .env
 .env.local
 admin/.env.local
+docker-compose.override.yml
 *.log
 .DS_Store
 .convex/
