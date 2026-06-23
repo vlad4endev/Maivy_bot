@@ -41,6 +41,12 @@ export type BotAction =
       parseMode?: ParseMode;
     }
   | {
+      type: "delete_message";
+      messageId: string;
+      /** Do not log when the message is already gone. */
+      optional?: boolean;
+    }
+  | {
       type: "answer_callback";
       text?: string;
     };

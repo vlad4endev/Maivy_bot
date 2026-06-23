@@ -66,6 +66,7 @@ export function createBotHandlers() {
   function sectionDisplayActions(
     section: DynamicSection,
     keyboard: ReturnType<typeof resolveKeyboard>,
+    messageId?: string,
   ): BotAction[] {
     return buildSectionDisplayActions({
       text: formatSectionBody(section),
@@ -73,6 +74,7 @@ export function createBotHandlers() {
       keyboard,
       mediaType: section.mediaType,
       mediaPath: section.mediaPath,
+      messageId,
     });
   }
 
@@ -142,6 +144,23 @@ export function createBotHandlers() {
           getMenuText(content) ?? "Главное меню Maivy. Выберите действие:";
         const menuKb = resolveKeyboard(content, "main_menu", mainMenuKeyboard);
 
+        if (messageId) {
+          return [
+            {
+              type: "edit_text",
+              messageId,
+              text: menuText,
+              keyboard: menuKb,
+              parseMode: "HTML",
+            },
+            {
+              type: "delete_message",
+              messageId: String(Number(messageId) + 1),
+              optional: true,
+            },
+          ];
+        }
+
         return [
           {
             type: "send_text",
@@ -175,7 +194,7 @@ export function createBotHandlers() {
     return Number.isFinite(step) ? step : undefined;
   }
 
-  function navigateToSection(slug: string, _messageId?: string): BotAction[] {
+  function navigateToSection(slug: string, messageId?: string): BotAction[] {
     const content = getEffectiveContent();
     const section = getSectionBySlug(content, slug);
 
@@ -231,12 +250,12 @@ export function createBotHandlers() {
         : undefined,
     );
 
-    return sectionDisplayActions(section, keyboard);
+    return sectionDisplayActions(section, keyboard, messageId);
   }
 
   function aboutStepActions(
     step: number,
-    _messageId: string | undefined,
+    messageId: string | undefined,
     totalAboutSteps: number,
   ): BotAction[] {
     const content = getEffectiveContent();
@@ -250,7 +269,7 @@ export function createBotHandlers() {
         () => aboutStepKeyboard(step, totalAboutSteps),
         { aboutStep: step, totalAboutSteps },
       );
-      return sectionDisplayActions(section, keyboard);
+      return sectionDisplayActions(section, keyboard, messageId);
     }
 
     if (step < 1 || step > totalAboutSteps) {
@@ -270,6 +289,23 @@ export function createBotHandlers() {
       () => aboutStepKeyboard(step, totalAboutSteps),
       { aboutStep: step, totalAboutSteps },
     );
+
+    if (messageId) {
+      return [
+        {
+          type: "edit_text",
+          messageId,
+          text,
+          keyboard,
+          parseMode: "HTML",
+        },
+        {
+          type: "delete_message",
+          messageId: String(Number(messageId) + 1),
+          optional: true,
+        },
+      ];
+    }
 
     return [
       {

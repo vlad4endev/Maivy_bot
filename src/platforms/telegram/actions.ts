@@ -114,7 +114,9 @@ async function executeTelegramAction(
   config: AppContentConfig,
 ): Promise<void> {
   const keyboard = buildTelegramKeyboard(
-    action.type === "answer_callback" ? undefined : action.keyboard,
+    action.type === "answer_callback" || action.type === "delete_message"
+      ? undefined
+      : action.keyboard,
   );
 
   switch (action.type) {
@@ -181,6 +183,16 @@ async function executeTelegramAction(
       });
       return;
 
+    case "delete_message":
+      try {
+        await api.deleteMessage(chatId, Number(action.messageId));
+      } catch (error) {
+        if (!action.optional) {
+          throw error;
+        }
+      }
+      return;
+
     case "answer_callback":
       return;
   }
@@ -230,6 +242,18 @@ export async function executeTelegramCallbackActions(
           },
           config,
         );
+      }
+      continue;
+    }
+
+    if (action.type === "delete_message") {
+      try {
+        await ctx.api.deleteMessage(chatId, Number(action.messageId));
+      } catch (error) {
+        if (!action.optional) {
+          const message = error instanceof Error ? error.message : String(error);
+          console.warn("Telegram: не удалось удалить сообщение:", message);
+        }
       }
       continue;
     }

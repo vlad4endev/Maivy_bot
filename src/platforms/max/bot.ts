@@ -232,6 +232,18 @@ async function executeMaxCallbackActions(
         continue;
       }
 
+      if (action.type === "delete_message") {
+        try {
+          await ctx.api.deleteMessage(action.messageId);
+        } catch (error) {
+          if (!action.optional) {
+            const message = error instanceof Error ? error.message : String(error);
+            console.warn("MAX: не удалось удалить сообщение:", message);
+          }
+        }
+        continue;
+      }
+
       await executeMaxAction(ctx, action, config);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -309,7 +321,9 @@ async function executeMaxAction(
   _config: AppContentConfig,
 ): Promise<void> {
   const keyboardAttachment = buildMaxKeyboard(
-    action.type === "answer_callback" ? undefined : action.keyboard,
+    action.type === "answer_callback" || action.type === "delete_message"
+      ? undefined
+      : action.keyboard,
   );
 
   const attachments: MaxAttachment[] = keyboardAttachment ? [keyboardAttachment] : [];
@@ -368,6 +382,16 @@ async function executeMaxAction(
         });
       } else {
         await ctx.reply(action.text, { format, attachments });
+      }
+      return;
+
+    case "delete_message":
+      try {
+        await ctx.api.deleteMessage(action.messageId);
+      } catch (error) {
+        if (!action.optional) {
+          throw error;
+        }
       }
       return;
 

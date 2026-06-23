@@ -47,6 +47,75 @@ export function sectionHasMedia(section: {
   return mediaType !== "none" && Boolean(section.mediaPath?.trim());
 }
 
+function companionMediaMessageId(textMessageId: string): string {
+  return String(Number(textMessageId) + 1);
+}
+
+function appendSectionMediaActions(
+  actions: BotAction[],
+  mediaType: SectionMediaType,
+  resolvedMediaPath: string,
+  parseMode: ParseMode,
+): void {
+  switch (mediaType) {
+    case "image":
+      actions.push({
+        type: "send_photo",
+        source: resolvedMediaPath,
+        parseMode,
+      });
+      break;
+    case "video":
+      actions.push({
+        type: "send_video",
+        source: resolvedMediaPath,
+      });
+      break;
+    case "video_note":
+      actions.push({
+        type: "send_video_note",
+        source: resolvedMediaPath,
+      });
+      break;
+  }
+}
+
+function buildCallbackSectionActions(input: {
+  messageId: string;
+  text: string;
+  parseMode: ParseMode;
+  keyboard?: Keyboard;
+  mediaType: SectionMediaType;
+  hasMedia: boolean;
+  resolvedMediaPath?: string;
+}): BotAction[] {
+  const actions: BotAction[] = [
+    {
+      type: "edit_text",
+      messageId: input.messageId,
+      text: input.text,
+      keyboard: input.keyboard,
+      parseMode: input.parseMode,
+    },
+    {
+      type: "delete_message",
+      messageId: companionMediaMessageId(input.messageId),
+      optional: true,
+    },
+  ];
+
+  if (input.hasMedia && input.resolvedMediaPath) {
+    appendSectionMediaActions(
+      actions,
+      input.mediaType,
+      input.resolvedMediaPath,
+      input.parseMode,
+    );
+  }
+
+  return actions;
+}
+
 export function buildSectionDisplayActions(input: SectionDisplayInput): BotAction[] {
   const parseMode = input.parseMode ?? "HTML";
   const keyboard = input.keyboard;
@@ -55,22 +124,22 @@ export function buildSectionDisplayActions(input: SectionDisplayInput): BotActio
   const wantsMedia = mediaType !== "none" && Boolean(input.mediaPath?.trim());
   const hasMedia = wantsMedia && Boolean(resolvedMediaPath);
 
+  if (input.messageId) {
+    return buildCallbackSectionActions({
+      messageId: input.messageId,
+      text: input.text,
+      parseMode,
+      keyboard,
+      mediaType,
+      hasMedia,
+      resolvedMediaPath,
+    });
+  }
+
   if (wantsMedia && !resolvedMediaPath && keyboard?.length) {
     return [
       {
         type: "send_text",
-        text: input.text,
-        keyboard,
-        parseMode,
-      },
-    ];
-  }
-
-  if (input.messageId && !hasMedia && !wantsMedia) {
-    return [
-      {
-        type: "edit_text",
-        messageId: input.messageId,
         text: input.text,
         keyboard,
         parseMode,
@@ -109,27 +178,7 @@ export function buildSectionDisplayActions(input: SectionDisplayInput): BotActio
     },
   ];
 
-  switch (mediaType) {
-    case "image":
-      actions.push({
-        type: "send_photo",
-        source: resolvedMediaPath!,
-        parseMode,
-      });
-      break;
-    case "video":
-      actions.push({
-        type: "send_video",
-        source: resolvedMediaPath!,
-      });
-      break;
-    case "video_note":
-      actions.push({
-        type: "send_video_note",
-        source: resolvedMediaPath!,
-      });
-      break;
-  }
+  appendSectionMediaActions(actions, mediaType, resolvedMediaPath!, parseMode);
 
   return actions;
 }
